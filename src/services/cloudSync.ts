@@ -10,6 +10,15 @@ export interface CloudUserData {
   updatedAt: number;
 }
 
+interface FirestoreUserDoc {
+  recordsJson?: string;
+  plotsJson?: string;
+  weighers?: string[];
+  settingsJson?: string;
+  recordCount?: number;
+  updatedAt?: number;
+}
+
 function mergeRecords(
   local: WeighingRecord[],
   cloud: WeighingRecord[]
@@ -40,6 +49,26 @@ function mergeWeighers(local: string[], cloud: string[]): string[] {
   return Array.from(new Set([...local, ...cloud]));
 }
 
+function safeJsonParse<T>(raw: string | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function toFirestoreDoc(data: CloudUserData): FirestoreUserDoc {
+  return {
+    recordsJson: JSON.stringify(data.records),
+    plotsJson: JSON.stringify(data.plots),
+    weighers: data.weighers,
+    settingsJson: JSON.stringify(data.settings),
+    recordCount: data.records.length,
+    updatedAt: data.updatedAt,
+  };
+}
+
 export async function syncWithCloud(
   uid: string,
   localData: Omit<CloudUserData, 'updatedAt'>
@@ -53,12 +82,19 @@ export async function syncWithCloud(
 
   let merged: CloudUserData;
   if (snap.exists()) {
-    const cloud = snap.data() as Partial<CloudUserData>;
+    const cloudDoc = snap.data() as FirestoreUserDoc;
+    const cloudRecords = safeJsonParse<WeighingRecord[]>(cloudDoc.recordsJson, []);
+    const cloudPlots = safeJsonParse<Plot[]>(cloudDoc.plotsJson, []);
+    const cloudSettings = safeJsonParse<AppSettings | null>(
+      cloudDoc.settingsJson,
+      null
+    );
+
     merged = {
-      records: mergeRecords(localData.records, cloud.records || []),
-      plots: mergePlots(localData.plots, cloud.plots || []),
-      weighers: mergeWeighers(localData.weighers, cloud.weighers || []),
-      settings: cloud.settings || localData.settings,
+      records: mergeRecords(localData.records, cloudRecords),
+      plots: mergePlots(localData.plots, cloudPlots),
+      weighers: mergeWeighers(localData.weighers, cloudDoc.weighers || []),
+      settings: cloudSettings || localData.settings,
       updatedAt: Date.now(),
     };
   } else {
@@ -68,7 +104,7 @@ export async function syncWithCloud(
     };
   }
 
-  await setDoc(ref, merged, { merge: true });
+  await setDoc(ref, toFirestoreDoc(merged), { merge: true });
   return merged;
 }
 
@@ -80,10 +116,10 @@ export async function pushToCloud(
   const ref = doc(db, 'users', uid);
   await setDoc(
     ref,
-    {
+    toFirestoreDoc({
       ...data,
       updatedAt: Date.now(),
-    },
+    }),
     { merge: true }
   );
 }

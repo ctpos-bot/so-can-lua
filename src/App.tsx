@@ -125,9 +125,13 @@ export function App() {
           setPlots(merged.plots);
           setWeighers(merged.weighers);
           setSettings(merged.settings);
+          setAuthError('');
           setSyncStatus('synced');
-        } catch {
+        } catch (err) {
           setSyncStatus('error');
+          setAuthError(
+            err instanceof Error ? err.message : 'Lỗi đồng bộ dữ liệu.'
+          );
         }
       } else {
         setSyncStatus('idle');
@@ -185,9 +189,11 @@ export function App() {
       setPlots(merged.plots);
       setWeighers(merged.weighers);
       setSettings(merged.settings);
+      setAuthError('');
       setSyncStatus('synced');
-    } catch {
+    } catch (err) {
       setSyncStatus('error');
+      setAuthError(err instanceof Error ? err.message : 'Lỗi đồng bộ dữ liệu.');
     }
   };
 
