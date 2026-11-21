@@ -178,23 +178,23 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-base font-bold text-slate-800">
+          <h3 className="text-lg font-extrabold text-slate-900">
             Bảng ghi trọng lượng từng bao (kg)
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm font-medium text-slate-600">
             Mỗi bảng 5 cột × 5 dòng (25 bao). Nhấn Enter để tự nhảy xuống ô dưới.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setUseCustomNumpad((prev) => !prev)}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
             useCustomNumpad
               ? 'bg-emerald-700 text-white shadow-sm'
-              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              : 'border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
           }`}
         >
-          <Calculator className="h-3.5 w-3.5" />
+          <Calculator className="h-4 w-4" />
           {useCustomNumpad ? 'Đang bật phím số nhanh' : 'Bật phím số nhanh'}
         </button>
       </div>
@@ -208,14 +208,14 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             key={table.id}
             className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 bg-emerald-50/70 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="rounded-md bg-emerald-700 px-2 py-0.5 text-xs font-bold text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-emerald-100/80 px-3.5 py-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="rounded-lg bg-emerald-800 px-2.5 py-1 text-sm font-extrabold text-white">
                   {table.name}
                 </span>
-                <span className="text-xs font-medium text-slate-600">
+                <span className="text-sm font-semibold text-slate-700">
                   {tableSummary.bagCount} bao •{' '}
-                  <strong className="text-emerald-800">
+                  <strong className="text-base font-black text-emerald-900">
                     {formatWeight(tableSummary.grossWeight)} kg
                   </strong>
                 </span>
@@ -224,10 +224,10 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveTable(tIdx)}
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                  className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100"
                   title="Xóa bảng này"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                   Xóa bảng
                 </button>
               )}
@@ -236,14 +236,14 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[340px] border-collapse text-center">
                 <thead>
-                  <tr className="bg-slate-100 text-xs font-semibold text-slate-600">
-                    <th className="w-16 border-b border-r border-slate-200 py-2 px-1">
+                  <tr className="bg-slate-200/70 text-xs sm:text-sm font-extrabold text-slate-800">
+                    <th className="w-16 border-b border-r border-slate-300 py-2.5 px-1">
                       Dòng
                     </th>
                     {Array.from({ length: COLS_PER_TABLE }, (_, cIdx) => (
                       <th
                         key={cIdx}
-                        className="border-b border-r border-slate-200 py-2 px-1 last:border-r-0"
+                        className="border-b border-r border-slate-300 py-2.5 px-1 last:border-r-0"
                       >
                         Cột {cIdx + 1}
                       </th>
@@ -253,8 +253,8 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                 <tbody>
                   {Array.from({ length: ROWS_PER_TABLE }, (_, rIdx) => (
                     <tr key={rIdx} className="border-b border-slate-200">
-                      <td className="border-r border-slate-200 bg-slate-50 py-1.5 px-1 text-xs font-medium text-slate-500">
-                        Dòng {rIdx + 1}
+                      <td className="border-r border-slate-200 bg-slate-100 py-2 px-1 text-xs sm:text-sm font-bold text-slate-700">
+                        D{rIdx + 1}
                       </td>
                       {Array.from({ length: COLS_PER_TABLE }, (_, cIdx) => {
                         const isActive =
@@ -272,16 +272,16 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                           <td
                             key={cIdx}
                             className={`border-r border-slate-200 p-0 last:border-r-0 ${
-                              isActive ? 'bg-amber-50 ring-2 ring-inset ring-emerald-600' : ''
+                              isActive ? 'bg-amber-50 ring-2 ring-inset ring-emerald-700' : ''
                             }`}
                           >
                             {useCustomNumpad ? (
                               <button
                                 type="button"
                                 onClick={() => focusCell(tIdx, cIdx, rIdx)}
-                                className={`h-11 w-full px-1 text-center text-sm font-semibold tabular-nums transition ${
+                                className={`h-13 w-full px-1 text-center text-base font-extrabold tabular-nums transition ${
                                   displayVal
-                                    ? 'text-slate-900'
+                                    ? 'text-slate-950'
                                     : 'text-slate-300'
                                 }`}
                               >
@@ -313,7 +313,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                                   );
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, tIdx, cIdx, rIdx)}
-                                className="h-11 w-full bg-transparent px-1 text-center text-sm font-semibold text-slate-900 tabular-nums placeholder:text-slate-300 focus:outline-none"
+                                className="h-13 w-full bg-transparent px-1 text-center text-base font-extrabold text-slate-950 tabular-nums placeholder:text-slate-300 focus:outline-none"
                               />
                             )}
                           </td>
@@ -323,14 +323,14 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-amber-50/80 font-bold text-emerald-900">
-                    <td className="border-r border-slate-200 py-2 px-1 text-xs text-slate-600">
+                  <tr className="bg-amber-100 font-black text-emerald-950">
+                    <td className="border-r border-slate-300 py-2.5 px-1 text-xs sm:text-sm font-extrabold text-slate-800">
                       Tổng
                     </td>
                     {colTotals.map((total, cIdx) => (
                       <td
                         key={cIdx}
-                        className="border-r border-slate-200 py-2 px-1 text-sm tabular-nums last:border-r-0"
+                        className="border-r border-slate-300 py-2.5 px-1 text-base font-black tabular-nums last:border-r-0"
                       >
                         {total > 0 ? formatWeight(total) : '0'}
                       </td>
@@ -346,34 +346,34 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
       <button
         type="button"
         onClick={handleAddTable}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50/50 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100/70 active:scale-[0.99]"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-500 bg-emerald-50/70 py-4 text-base font-extrabold text-emerald-900 transition hover:bg-emerald-100/80 active:scale-[0.99]"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-5 w-5" />
         Thêm bảng cân mới (25 bao tiếp theo)
       </button>
 
       {/* Bàn phím số nhanh tích hợp cho thao tác 1 tay ngoài đồng */}
       {useCustomNumpad && activeCell && (
-        <div className="sticky bottom-16 z-30 rounded-2xl border border-emerald-200 bg-white p-3 shadow-xl">
-          <div className="mb-2 flex items-center justify-between text-xs text-slate-600">
+        <div className="sticky bottom-18 z-30 rounded-2xl border-2 border-emerald-300 bg-white p-3.5 shadow-2xl">
+          <div className="mb-2.5 flex items-center justify-between text-sm text-slate-700">
             <span>
               Đang nhập:{' '}
-              <strong className="text-emerald-800">
+              <strong className="font-extrabold text-emerald-900">
                 Bảng {activeCell.tableIndex + 1} • Cột {activeCell.col + 1} • Dòng{' '}
                 {activeCell.row + 1}
               </strong>
             </span>
-            <span className="rounded bg-amber-100 px-2 py-0.5 font-mono text-sm font-bold text-amber-900">
+            <span className="rounded-lg bg-amber-100 px-2.5 py-1 font-mono text-base font-black text-amber-950">
               {editingText || '0'} kg
             </span>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2.5">
             {['7', '8', '9'].map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => handleNumpadPress(k)}
-                className="h-12 rounded-xl bg-slate-100 text-lg font-bold text-slate-800 active:bg-slate-200"
+                className="h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
               >
                 {k}
               </button>
@@ -381,10 +381,10 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             <button
               type="button"
               onClick={() => handleNumpadPress('BACK')}
-              className="flex h-12 items-center justify-center rounded-xl bg-rose-50 text-rose-700 active:bg-rose-100"
+              className="flex h-14 items-center justify-center rounded-xl bg-rose-100 text-rose-800 active:bg-rose-200"
               title="Xóa 1 ký tự"
             >
-              <Delete className="h-5 w-5" />
+              <Delete className="h-6 w-6" />
             </button>
 
             {['4', '5', '6'].map((k) => (
@@ -392,7 +392,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                 key={k}
                 type="button"
                 onClick={() => handleNumpadPress(k)}
-                className="h-12 rounded-xl bg-slate-100 text-lg font-bold text-slate-800 active:bg-slate-200"
+                className="h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
               >
                 {k}
               </button>
@@ -400,7 +400,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             <button
               type="button"
               onClick={() => handleNumpadPress('CLEAR')}
-              className="h-12 rounded-xl bg-amber-50 text-xs font-bold text-amber-800 active:bg-amber-100"
+              className="h-14 rounded-xl bg-amber-100 text-sm font-extrabold text-amber-900 active:bg-amber-200"
             >
               Xóa ô
             </button>
@@ -410,7 +410,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                 key={k}
                 type="button"
                 onClick={() => handleNumpadPress(k)}
-                className="h-12 rounded-xl bg-slate-100 text-lg font-bold text-slate-800 active:bg-slate-200"
+                className="h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
               >
                 {k}
               </button>
@@ -418,23 +418,23 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             <button
               type="button"
               onClick={() => handleNumpadPress('NEXT')}
-              className="row-span-2 flex flex-col items-center justify-center gap-1 rounded-xl bg-emerald-700 text-sm font-bold text-white shadow-sm active:bg-emerald-800"
+              className="row-span-2 flex flex-col items-center justify-center gap-1 rounded-xl bg-emerald-700 text-base font-extrabold text-white shadow-sm active:bg-emerald-800"
             >
-              <CornerDownLeft className="h-5 w-5" />
+              <CornerDownLeft className="h-6 w-6" />
               Tiếp
             </button>
 
             <button
               type="button"
               onClick={() => handleNumpadPress('0')}
-              className="col-span-2 h-12 rounded-xl bg-slate-100 text-lg font-bold text-slate-800 active:bg-slate-200"
+              className="col-span-2 h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
             >
               0
             </button>
             <button
               type="button"
               onClick={() => handleNumpadPress(',')}
-              className="h-12 rounded-xl bg-slate-100 text-xl font-bold text-slate-800 active:bg-slate-200"
+              className="h-14 rounded-xl bg-slate-100 text-2xl font-black text-slate-900 active:bg-slate-300"
             >
               ,
             </button>

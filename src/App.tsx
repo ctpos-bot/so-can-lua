@@ -175,14 +175,14 @@ export function App() {
   };
 
   const navItems: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'weigh', label: 'Cân Lúa', icon: <Scale className="h-5 w-5" /> },
-    { key: 'records', label: 'Sổ Cân', icon: <BookOpen className="h-5 w-5" /> },
-    { key: 'reports', label: 'Báo Cáo', icon: <BarChart3 className="h-5 w-5" /> },
-    { key: 'settings', label: 'Danh Mục', icon: <FolderCog className="h-5 w-5" /> },
+    { key: 'weigh', label: 'Cân Lúa', icon: <Scale className="h-6 w-6" /> },
+    { key: 'records', label: 'Sổ Cân', icon: <BookOpen className="h-6 w-6" /> },
+    { key: 'reports', label: 'Báo Cáo', icon: <BarChart3 className="h-6 w-6" /> },
+    { key: 'settings', label: 'Danh Mục', icon: <FolderCog className="h-6 w-6" /> },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 md:pb-8">
+    <div className="min-h-screen bg-slate-50 pb-24 md:pb-8">
       {/* Top App Bar */}
       <header className="no-print sticky top-0 z-30 border-b border-emerald-800/20 bg-emerald-700 text-white shadow-sm pt-safe">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -222,10 +222,10 @@ export function App() {
           {/* Quick live pill on mobile when weighing */}
           {tab === 'weigh' && (
             <div className="text-right md:hidden">
-              <div className="text-[11px] text-emerald-100">
+              <div className="text-xs font-bold text-emerald-100">
                 {activeSummary.bagCount} bao • {formatWeight(activeSummary.netWeight)} kg
               </div>
-              <div className="text-sm font-black text-amber-300 tabular-nums">
+              <div className="text-base font-black text-amber-300 tabular-nums">
                 {formatCurrency(activeSummary.totalAmount)}
               </div>
             </div>
@@ -275,7 +275,7 @@ export function App() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="no-print fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur pb-safe md:hidden">
+      <nav className="no-print fixed bottom-0 left-0 right-0 z-40 border-t-2 border-slate-200 bg-white/95 backdrop-blur pb-safe md:hidden">
         <div className="grid grid-cols-4">
           {navItems.map((item) => {
             const active = tab === item.key;
@@ -284,13 +284,13 @@ export function App() {
                 key={item.key}
                 type="button"
                 onClick={() => setTab(item.key)}
-                className={`flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold transition ${
-                  active ? 'text-emerald-700' : 'text-slate-500'
+                className={`flex flex-col items-center justify-center gap-1 py-2.5 text-xs font-extrabold transition ${
+                  active ? 'text-emerald-800' : 'text-slate-600'
                 }`}
               >
                 <div
-                  className={`rounded-full px-3 py-1 transition ${
-                    active ? 'bg-emerald-100 text-emerald-800' : ''
+                  className={`rounded-full px-3.5 py-1 transition ${
+                    active ? 'bg-emerald-100 text-emerald-900' : ''
                   }`}
                 >
                   {item.icon}
