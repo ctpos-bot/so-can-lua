@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     manualTareKg: 0,
   },
   defaultWeigherName: 'Anh Ba',
+  quickThreeDigitDecimal: true,
 };
 
 export const SAMPLE_PLOTS: Plot[] = [
@@ -132,7 +133,18 @@ export function saveWeighers(weighers: string[]): void {
 }
 
 export function loadSettings(): AppSettings {
-  return safeParse<AppSettings>(localStorage.getItem(KEYS.SETTINGS), DEFAULT_SETTINGS);
+  const parsed = safeParse<Partial<AppSettings>>(
+    localStorage.getItem(KEYS.SETTINGS),
+    {}
+  );
+  return {
+    ...DEFAULT_SETTINGS,
+    ...parsed,
+    defaultTareConfig: {
+      ...DEFAULT_SETTINGS.defaultTareConfig,
+      ...(parsed.defaultTareConfig || {}),
+    },
+  };
 }
 
 export function saveSettings(settings: AppSettings): void {

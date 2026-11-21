@@ -7,6 +7,7 @@ import {
   Trash2,
   Download,
   Upload,
+  Info,
 } from 'lucide-react';
 import type { AppSettings, Plot, WeighingRecord } from '../types/weighing';
 
@@ -271,7 +272,7 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-600">
+            <label className="mb-1.5 block text-sm font-bold text-slate-700">
               Người cân mặc định
             </label>
             <input
@@ -283,36 +284,64 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
                   defaultWeigherName: e.target.value,
                 })
               }
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold"
+              className="w-full rounded-xl border-2 border-slate-300 px-3 py-2.5 text-base font-bold"
             />
           </div>
+        </div>
+
+        {/* Bật / tắt nhập nhanh 555 => 55,5 */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-slate-200 bg-slate-50 p-3.5">
+          <div>
+            <div className="text-base font-extrabold text-slate-900">
+              Nhập nhanh 3 số thành số lẻ (555 → 55,5)
+            </div>
+            <div className="text-sm font-medium text-slate-600">
+              Khi bật, gõ 555 tự đổi thành 55,5 kg; gõ 495 tự thành 49,5 kg.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdateSettings({
+                ...settings,
+                quickThreeDigitDecimal: !settings.quickThreeDigitDecimal,
+              })
+            }
+            className={`min-w-[130px] rounded-xl px-5 py-3 text-base font-black transition active:scale-95 ${
+              settings.quickThreeDigitDecimal
+                ? 'bg-emerald-700 text-white shadow-sm'
+                : 'border-2 border-slate-300 bg-white text-slate-700'
+            }`}
+          >
+            {settings.quickThreeDigitDecimal ? 'ĐANG BẬT' : 'ĐANG TẮT'}
+          </button>
         </div>
       </div>
 
       {/* Sao lưu & Khôi phục */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="mb-1 text-base font-bold text-slate-800">
+        <h2 className="mb-1 text-lg font-extrabold text-slate-900">
           Sao lưu & Khôi phục dữ liệu
         </h2>
-        <p className="mb-3 text-xs text-slate-500">
+        <p className="mb-3 text-sm font-medium text-slate-600">
           Dữ liệu được lưu trực tiếp trên máy (hoạt động không cần mạng). Hãy sao lưu định kỳ để tránh mất sổ khi đổi điện thoại.
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           <button
             type="button"
             onClick={handleExportBackup}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-900"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-3 text-sm font-extrabold text-white hover:bg-slate-900 active:scale-95"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-5 w-5" />
             Tải file sao lưu (JSON)
           </button>
 
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 py-3 text-sm font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
           >
-            <Upload className="h-4 w-4" />
+            <Upload className="h-5 w-5" />
             Khôi phục từ file
           </button>
           <input
@@ -324,8 +353,27 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
           />
         </div>
         {backupMsg && (
-          <p className="mt-2 text-xs font-semibold text-emerald-700">{backupMsg}</p>
+          <p className="mt-2.5 text-sm font-bold text-emerald-700">{backupMsg}</p>
         )}
+      </div>
+
+      {/* Thông tin ứng dụng */}
+      <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
+        <h2 className="mb-2 flex items-center gap-2 text-lg font-extrabold text-emerald-950">
+          <Info className="h-5 w-5 text-emerald-700" />
+          Thông tin ứng dụng
+        </h2>
+        <div className="space-y-1.5 text-base text-slate-800">
+          <div>
+            Tên ứng dụng: <strong className="font-black text-emerald-900">Sổ Cân Lúa</strong>
+          </div>
+          <div>
+            Phiên bản: <span className="rounded-lg bg-emerald-700 px-2.5 py-0.5 text-sm font-black text-white">v1.0.0</span>
+          </div>
+          <div className="text-sm font-medium text-slate-600">
+            Hỗ trợ cân lúa ghi sổ 5×5, trừ bao quy ký, tính tiền, quản lý khuông đất, người cân và báo cáo số liệu offline trên WebApp & Android APK.
+          </div>
+        </div>
       </div>
     </div>
   );

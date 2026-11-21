@@ -175,27 +175,27 @@ export function App() {
   };
 
   const navItems: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'weigh', label: 'Cân Lúa', icon: <Scale className="h-6 w-6" /> },
-    { key: 'records', label: 'Sổ Cân', icon: <BookOpen className="h-6 w-6" /> },
-    { key: 'reports', label: 'Báo Cáo', icon: <BarChart3 className="h-6 w-6" /> },
-    { key: 'settings', label: 'Danh Mục', icon: <FolderCog className="h-6 w-6" /> },
+    { key: 'weigh', label: 'Cân Lúa', icon: <Scale className="h-7 w-7" /> },
+    { key: 'records', label: 'Sổ Cân', icon: <BookOpen className="h-7 w-7" /> },
+    { key: 'reports', label: 'Báo Cáo', icon: <BarChart3 className="h-7 w-7" /> },
+    { key: 'settings', label: 'Danh Mục', icon: <FolderCog className="h-7 w-7" /> },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 md:pb-8">
+    <div className="min-h-screen bg-slate-50 pb-28 md:pb-8">
       {/* Top App Bar */}
       <header className="no-print sticky top-0 z-30 border-b border-emerald-800/20 bg-emerald-700 text-white shadow-sm pt-safe">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400 text-emerald-950 shadow-xs">
-              <Wheat className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-emerald-950 shadow-xs">
+              <Wheat className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-base font-extrabold leading-tight tracking-tight">
-                Sổ Cân Lúa
+              <h1 className="text-lg font-black leading-tight tracking-tight">
+                Sổ Cân Lúa <span className="text-xs font-bold text-emerald-200">v1.0.0</span>
               </h1>
-              <p className="text-[11px] text-emerald-100">
-                Ghi mã cân • Trừ bao • Tính tiền • Báo cáo
+              <p className="text-xs font-semibold text-emerald-100">
+                Ghi mã • Trừ bao • Tính tiền
               </p>
             </div>
           </div>
@@ -242,6 +242,13 @@ export function App() {
             weighers={weighers}
             isEditingExisting={isEditingExisting}
             savedBanner={savedBanner}
+            quickThreeDigitDecimal={settings.quickThreeDigitDecimal}
+            onToggleQuickThreeDigit={() =>
+              setSettings((prev) => ({
+                ...prev,
+                quickThreeDigitDecimal: !prev.quickThreeDigitDecimal,
+              }))
+            }
             onChange={setActiveRecord}
             onSave={handleSaveActive}
             onNewRecord={handleNewRecord}
@@ -284,12 +291,12 @@ export function App() {
                 key={item.key}
                 type="button"
                 onClick={() => setTab(item.key)}
-                className={`flex flex-col items-center justify-center gap-1 py-2.5 text-xs font-extrabold transition ${
+                className={`flex flex-col items-center justify-center gap-1 py-3 text-xs font-black transition ${
                   active ? 'text-emerald-800' : 'text-slate-600'
                 }`}
               >
                 <div
-                  className={`rounded-full px-3.5 py-1 transition ${
+                  className={`rounded-full px-4 py-1 transition ${
                     active ? 'bg-emerald-100 text-emerald-900' : ''
                   }`}
                 >

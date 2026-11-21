@@ -52,6 +52,8 @@ export interface AppSettings {
   defaultPricePerKg: number;
   defaultTareConfig: TareConfig;
   defaultWeigherName: string;
+  /** Tự động đổi 3 chữ số liền thành số lẻ (VD: 555 => 55,5) */
+  quickThreeDigitDecimal: boolean;
 }
 
 export interface RecordSummary {

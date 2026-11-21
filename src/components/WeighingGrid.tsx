@@ -12,6 +12,8 @@ import {
 
 interface WeighingGridProps {
   tables: WeighingTable[];
+  quickThreeDigitDecimal: boolean;
+  onToggleQuickThreeDigit: () => void;
   onChangeTables: (tables: WeighingTable[]) => void;
 }
 
@@ -23,6 +25,8 @@ interface ActiveCell {
 
 export const WeighingGrid: React.FC<WeighingGridProps> = ({
   tables,
+  quickThreeDigitDecimal,
+  onToggleQuickThreeDigit,
   onChangeTables,
 }) => {
   const [activeCell, setActiveCell] = useState<ActiveCell | null>(null);
@@ -34,7 +38,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
     `${tIdx}-${col}-${row}`;
 
   const commitCell = (tIdx: number, col: number, row: number, raw: string) => {
-    const parsed = parseWeightInput(raw);
+    const parsed = parseWeightInput(raw, quickThreeDigitDecimal);
     const updated = tables.map((tbl, idx) => {
       if (idx !== tIdx) return tbl;
       const newCells = tbl.cells.map((c, cIdx) =>
@@ -176,27 +180,44 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="space-y-2.5">
         <div>
-          <h3 className="text-lg font-extrabold text-slate-900">
+          <h3 className="text-lg font-black text-slate-900">
             Bảng ghi trọng lượng từng bao (kg)
           </h3>
-          <p className="text-sm font-medium text-slate-600">
-            Mỗi bảng 5 cột × 5 dòng (25 bao). Nhập nhanh 3 số tự chia 10 (VD: <strong>555 → 55,5</strong>; <strong>495 → 49,5</strong>).
+          <p className="text-sm font-semibold text-slate-600">
+            {quickThreeDigitDecimal
+              ? 'Mẹo nhập nhanh: gõ 555 tự thành 55,5 • gõ 495 tự thành 49,5.'
+              : 'Đang nhập theo số chính xác (muốn có số lẻ hãy bấm dấu phẩy).'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setUseCustomNumpad((prev) => !prev)}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-            useCustomNumpad
-              ? 'bg-emerald-700 text-white shadow-sm'
-              : 'border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
-          }`}
-        >
-          <Calculator className="h-4 w-4" />
-          {useCustomNumpad ? 'Đang bật phím số nhanh' : 'Bật phím số nhanh'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onToggleQuickThreeDigit}
+            className={`inline-flex flex-1 min-w-[200px] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold transition active:scale-95 ${
+              quickThreeDigitDecimal
+                ? 'bg-amber-500 text-slate-950 shadow-sm'
+                : 'border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            {quickThreeDigitDecimal
+              ? '555 → 55,5: ĐANG BẬT'
+              : '555 → 55,5: ĐANG TẮT'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setUseCustomNumpad((prev) => !prev)}
+            className={`inline-flex flex-1 min-w-[180px] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold transition active:scale-95 ${
+              useCustomNumpad
+                ? 'bg-emerald-700 text-white shadow-sm'
+                : 'border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <Calculator className="h-5 w-5" />
+            {useCustomNumpad ? 'Phím số nhanh: BẬT' : 'Bật phím số nhanh'}
+          </button>
+        </div>
       </div>
 
       {tables.map((table, tIdx) => {
@@ -279,7 +300,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                               <button
                                 type="button"
                                 onClick={() => focusCell(tIdx, cIdx, rIdx)}
-                                className={`h-13 w-full px-1 text-center text-base font-extrabold tabular-nums transition ${
+                                className={`h-14 w-full px-1 text-center text-lg font-black tabular-nums transition ${
                                   displayVal
                                     ? 'text-slate-950'
                                     : 'text-slate-300'
@@ -313,7 +334,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                                   );
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, tIdx, cIdx, rIdx)}
-                                className="h-13 w-full bg-transparent px-1 text-center text-base font-extrabold text-slate-950 tabular-nums placeholder:text-slate-300 focus:outline-none"
+                                className="h-14 w-full bg-transparent px-1 text-center text-lg font-black text-slate-950 tabular-nums placeholder:text-slate-300 focus:outline-none"
                               />
                             )}
                           </td>
@@ -324,13 +345,13 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                 </tbody>
                 <tfoot>
                   <tr className="bg-amber-100 font-black text-emerald-950">
-                    <td className="border-r border-slate-300 py-2.5 px-1 text-xs sm:text-sm font-extrabold text-slate-800">
+                    <td className="border-r border-slate-300 py-3 px-1 text-sm font-black text-slate-900">
                       Tổng
                     </td>
                     {colTotals.map((total, cIdx) => (
                       <td
                         key={cIdx}
-                        className="border-r border-slate-300 py-2.5 px-1 text-base font-black tabular-nums last:border-r-0"
+                        className="border-r border-slate-300 py-3 px-1 text-lg font-black tabular-nums last:border-r-0"
                       >
                         {total > 0 ? formatWeight(total) : '0'}
                       </td>

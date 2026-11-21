@@ -24,6 +24,8 @@ interface WeighingFormProps {
   weighers: string[];
   isEditingExisting: boolean;
   savedBanner: boolean;
+  quickThreeDigitDecimal: boolean;
+  onToggleQuickThreeDigit: () => void;
   onChange: (updated: WeighingRecord) => void;
   onSave: () => void;
   onNewRecord: () => void;
@@ -36,6 +38,8 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
   weighers,
   isEditingExisting,
   savedBanner,
+  quickThreeDigitDecimal,
+  onToggleQuickThreeDigit,
   onChange,
   onSave,
   onNewRecord,
@@ -87,29 +91,29 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={onNewRecord}
-            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 active:scale-95"
+            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
           >
-            <FilePlus2 className="h-4 w-4" />
+            <FilePlus2 className="h-5 w-5" />
             Phiếu mới
           </button>
           <button
             type="button"
             onClick={onPrint}
-            className="inline-flex items-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50 active:scale-95"
+            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
           >
-            <Printer className="h-4 w-4" />
+            <Printer className="h-5 w-5" />
             In phiếu
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm hover:bg-emerald-800 active:scale-95"
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 py-3 text-base font-black text-white shadow-sm hover:bg-emerald-800 active:scale-95"
           >
-            <Save className="h-4 w-4" />
+            <Save className="h-5 w-5" />
             Lưu phiếu
           </button>
         </div>
@@ -391,6 +395,8 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
       {/* Bảng nhập trọng lượng từng bao */}
       <WeighingGrid
         tables={record.tables}
+        quickThreeDigitDecimal={quickThreeDigitDecimal}
+        onToggleQuickThreeDigit={onToggleQuickThreeDigit}
         onChangeTables={(tables) => onChange({ ...record, tables })}
       />
 
