@@ -5,6 +5,7 @@ import {
   BarChart3,
   FolderCog,
   Wheat,
+  RefreshCw,
 } from 'lucide-react';
 import type { AppSettings, Plot, WeighingRecord } from './types/weighing';
 import {
@@ -219,17 +220,37 @@ export function App() {
             ))}
           </nav>
 
-          {/* Quick live pill on mobile when weighing */}
-          {tab === 'weigh' && (
-            <div className="text-right md:hidden">
-              <div className="text-xs font-bold text-emerald-100">
-                {activeSummary.bagCount} bao • {formatWeight(activeSummary.netWeight)} kg
+          {/* Quick live pill + update button on mobile */}
+          <div className="flex items-center gap-2 md:hidden">
+            {tab === 'weigh' && (
+              <div className="text-right">
+                <div className="text-xs font-bold text-emerald-100">
+                  {activeSummary.bagCount} bao • {formatWeight(activeSummary.netWeight)} kg
+                </div>
+                <div className="text-base font-black text-amber-300 tabular-nums">
+                  {formatCurrency(activeSummary.totalAmount)}
+                </div>
               </div>
-              <div className="text-base font-black text-amber-300 tabular-nums">
-                {formatCurrency(activeSummary.totalAmount)}
-              </div>
-            </div>
-          )}
+            )}
+            <button
+              type="button"
+              onClick={async () => {
+                if ('serviceWorker' in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  for (const reg of regs) await reg.update();
+                }
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map((k) => caches.delete(k)));
+                }
+                window.location.reload();
+              }}
+              className="rounded-xl bg-emerald-600 p-2.5 text-white active:scale-95"
+              title="Cập nhật bản mới"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </header>
 

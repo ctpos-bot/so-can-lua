@@ -52,6 +52,7 @@ export function createSampleRecords(): WeighingRecord[] {
       date: today,
       plotId: 'plot-1',
       plotName: 'Khuông Bảy Xã',
+      areaCong: 5,
       riceVariety: 'OM 18',
       weigherName: 'Anh Ba',
       farmerName: 'Chú Tư',
@@ -76,6 +77,10 @@ export function createSampleRecords(): WeighingRecord[] {
         },
       ],
       deposit: 2000000,
+      expenses: [
+        { id: 'exp-1', name: 'Tiền giống & Phân bón', amount: 2500000 },
+        { id: 'exp-2', name: 'Công cắt & Vận chuyển', amount: 1200000 },
+      ],
       notes: 'Phiếu mẫu theo bảng cân 5x5 (25 bao)',
       createdAt: now - 3600000,
       updatedAt: now - 3600000,

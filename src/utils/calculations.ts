@@ -106,6 +106,17 @@ export function calcRecordSummary(record: WeighingRecord): RecordSummary {
   const totalAmount = Math.round(netWeight * (record.pricePerKg || 0));
   const remainingAmount = totalAmount - (record.deposit || 0);
 
+  const totalExpenses = Math.round(
+    (record.expenses || []).reduce((sum, item) => sum + (item.amount || 0), 0)
+  );
+  const profit = totalAmount - totalExpenses;
+
+  const area = record.areaCong && record.areaCong > 0 ? record.areaCong : 0;
+  const bagsPerCong = area > 0 ? Math.round((bagCount / area) * 100) / 100 : null;
+  const kgPerCong = area > 0 ? Math.round((netWeight / area) * 100) / 100 : null;
+  const amountPerCong = area > 0 ? Math.round(totalAmount / area) : null;
+  const profitPerCong = area > 0 ? Math.round(profit / area) : null;
+
   return {
     bagCount,
     grossWeight,
@@ -113,6 +124,12 @@ export function calcRecordSummary(record: WeighingRecord): RecordSummary {
     netWeight,
     totalAmount,
     remainingAmount,
+    totalExpenses,
+    profit,
+    bagsPerCong,
+    kgPerCong,
+    amountPerCong,
+    profitPerCong,
   };
 }
 
@@ -142,6 +159,7 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
     'Mã phiếu',
     'Ngày cân',
     'Khuông đất',
+    'Diện tích (công)',
     'Giống lúa',
     'Người cân',
     'Chủ ruộng',
@@ -151,6 +169,11 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
     'Số ký thực (kg)',
     'Đơn giá (đ/kg)',
     'Thành tiền (đ)',
+    'Tổng chi phí (đ)',
+    'Lợi nhuận (đ)',
+    'Bao/công',
+    'Ký/công',
+    'Tiền/công (đ)',
     'Đã cọc (đ)',
     'Còn lại (đ)',
     'Ghi chú',
@@ -170,6 +193,7 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
       rec.code,
       formatDateVN(rec.date),
       rec.plotName || 'Chưa phân loại',
+      rec.areaCong || '',
       rec.riceVariety,
       rec.weigherName || '',
       rec.farmerName || '',
@@ -179,6 +203,11 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
       s.netWeight,
       rec.pricePerKg,
       s.totalAmount,
+      s.totalExpenses,
+      s.profit,
+      s.bagsPerCong ?? '',
+      s.kgPerCong ?? '',
+      s.amountPerCong ?? '',
       rec.deposit,
       s.remainingAmount,
       rec.notes || '',

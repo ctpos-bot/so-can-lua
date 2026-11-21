@@ -9,8 +9,16 @@ import {
   FilePlus2,
   Printer,
   CheckCircle2,
+  Plus,
+  Trash2,
+  Wallet,
 } from 'lucide-react';
-import type { Plot, TareMode, WeighingRecord } from '../types/weighing';
+import type {
+  ExpenseItem,
+  Plot,
+  TareMode,
+  WeighingRecord,
+} from '../types/weighing';
 import {
   calcRecordSummary,
   formatCurrency,
@@ -58,10 +66,53 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
         ...record,
         plotId: found.id,
         plotName: found.name,
+        areaCong: found.areaCong ?? record.areaCong,
         riceVariety: found.riceVariety || record.riceVariety,
         farmerName: found.owner || record.farmerName,
       });
     }
+  };
+
+  const EXPENSE_PRESETS = [
+    'Tiền giống',
+    'Phân bón',
+    'Thuốc BVTV',
+    'Công cắt',
+    'Vận chuyển / Bốc vác',
+    'Làm đất / Bơm nước',
+  ];
+
+  const expenses = record.expenses || [];
+
+  const handleAddExpense = (presetName = '') => {
+    const newItem: ExpenseItem = {
+      id: `exp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: presetName,
+      amount: 0,
+    };
+    onChange({ ...record, expenses: [...expenses, newItem] });
+  };
+
+  const handleUpdateExpense = (
+    id: string,
+    field: 'name' | 'amount',
+    value: string
+  ) => {
+    const updated = expenses.map((item) => {
+      if (item.id !== id) return item;
+      if (field === 'amount') {
+        return { ...item, amount: Math.max(0, Number(value) || 0) };
+      }
+      return { ...item, name: value };
+    });
+    onChange({ ...record, expenses: updated });
+  };
+
+  const handleRemoveExpense = (id: string) => {
+    onChange({
+      ...record,
+      expenses: expenses.filter((item) => item.id !== id),
+    });
   };
 
   const updateTareMode = (mode: TareMode) => {
@@ -259,6 +310,28 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
               placeholder="Tên chủ ruộng..."
               value={record.farmerName}
               onChange={(e) => onChange({ ...record, farmerName: e.target.value })}
+              className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+            />
+          </div>
+
+          {/* Diện tích (số công) */}
+          <div>
+            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+              Diện tích khuông đất (số công)
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.5"
+              min="0"
+              placeholder="VD: 5 (để tính TB / 1 công)"
+              value={record.areaCong || ''}
+              onChange={(e) =>
+                onChange({
+                  ...record,
+                  areaCong: e.target.value ? Math.max(0, Number(e.target.value)) : undefined,
+                })
+              }
               className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
             />
           </div>
@@ -495,6 +568,143 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
             onChange={(e) => onChange({ ...record, notes: e.target.value })}
             className="w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2.5 text-base font-medium text-slate-900 focus:border-emerald-600 focus:outline-none"
           />
+        </div>
+
+        {/* Hiệu quả trung bình / 1 công đất */}
+        {record.areaCong && record.areaCong > 0 ? (
+          <div className="mt-4 rounded-xl border-2 border-emerald-300 bg-white p-3.5">
+            <div className="mb-2 text-sm font-extrabold text-emerald-900">
+              Trung bình trên 1 công đất ({record.areaCong} công)
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <div className="rounded-lg bg-emerald-50 p-2.5">
+                <div className="text-xs font-bold text-slate-600">Bao / công</div>
+                <div className="text-xl font-black text-emerald-900">
+                  {summary.bagsPerCong !== null ? formatWeight(summary.bagsPerCong) : '0'}
+                </div>
+              </div>
+              <div className="rounded-lg bg-emerald-50 p-2.5">
+                <div className="text-xs font-bold text-slate-600">Ký / công</div>
+                <div className="text-xl font-black text-emerald-900">
+                  {summary.kgPerCong !== null ? `${formatWeight(summary.kgPerCong)} kg` : '0'}
+                </div>
+              </div>
+              <div className="rounded-lg bg-amber-50 p-2.5">
+                <div className="text-xs font-bold text-slate-600">Tiền lúa / công</div>
+                <div className="text-lg font-black text-amber-950">
+                  {summary.amountPerCong !== null ? formatCurrency(summary.amountPerCong) : '0 đ'}
+                </div>
+              </div>
+              <div className="rounded-lg bg-slate-100 p-2.5">
+                <div className="text-xs font-bold text-slate-600">Lợi nhuận / công</div>
+                <div
+                  className={`text-lg font-black ${
+                    (summary.profitPerCong ?? 0) >= 0 ? 'text-emerald-800' : 'text-rose-700'
+                  }`}
+                >
+                  {summary.profitPerCong !== null ? formatCurrency(summary.profitPerCong) : '0 đ'}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* 3. Chi phí & Tính lợi nhuận */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 text-base font-extrabold uppercase tracking-wide text-slate-800">
+            <Wallet className="h-5 w-5 text-emerald-700" />
+            3. Chi phí & Lợi nhuận
+          </h2>
+          <button
+            type="button"
+            onClick={() => handleAddExpense('')}
+            className="no-print inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-slate-900 active:scale-95"
+          >
+            <Plus className="h-4 w-4" />
+            Thêm khoản chi
+          </button>
+        </div>
+
+        {/* Nút thêm nhanh các loại chi phí thường gặp */}
+        <div className="no-print mb-3 flex flex-wrap gap-1.5">
+          {EXPENSE_PRESETS.map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => handleAddExpense(preset)}
+              className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800 hover:bg-emerald-50 hover:border-emerald-400 active:scale-95"
+            >
+              + {preset}
+            </button>
+          ))}
+        </div>
+
+        {expenses.length === 0 ? (
+          <p className="rounded-xl bg-slate-50 p-3 text-sm font-medium text-slate-500">
+            Chưa có khoản chi phí nào. Bấm các nút phía trên để thêm chi phí giống, phân bón, công cắt... sau khi lưu phiếu.
+          </p>
+        ) : (
+          <div className="space-y-2.5">
+            {expenses.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5"
+              >
+                <input
+                  type="text"
+                  placeholder="Tên khoản chi (VD: Phân bón)..."
+                  value={item.name}
+                  onChange={(e) =>
+                    handleUpdateExpense(item.id, 'name', e.target.value)
+                  }
+                  className="min-w-[160px] flex-1 rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-none"
+                />
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  step="10000"
+                  min="0"
+                  placeholder="Số tiền (đ)"
+                  value={item.amount || ''}
+                  onChange={(e) =>
+                    handleUpdateExpense(item.id, 'amount', e.target.value)
+                  }
+                  className="w-40 rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-right text-base font-black text-rose-700 focus:border-emerald-600 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveExpense(item.id)}
+                  className="no-print rounded-xl p-2.5 text-rose-600 hover:bg-rose-100"
+                  title="Xóa khoản chi"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-100 p-3.5">
+            <div className="text-xs font-bold text-slate-600">Tổng tiền lúa</div>
+            <div className="mt-1 text-xl font-black text-slate-900 tabular-nums">
+              {formatCurrency(summary.totalAmount)}
+            </div>
+          </div>
+          <div className="rounded-xl bg-rose-50 p-3.5 ring-1 ring-rose-200">
+            <div className="text-xs font-bold text-rose-800">Tổng chi phí</div>
+            <div className="mt-1 text-xl font-black text-rose-700 tabular-nums">
+              -{formatCurrency(summary.totalExpenses)}
+            </div>
+          </div>
+          <div className="rounded-xl bg-emerald-700 p-3.5 text-white shadow-sm">
+            <div className="text-xs font-bold text-emerald-100">Lợi nhuận thực</div>
+            <div className="mt-1 text-2xl font-black tabular-nums">
+              {formatCurrency(summary.profit)}
+            </div>
+          </div>
         </div>
       </div>
     </div>

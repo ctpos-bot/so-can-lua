@@ -8,6 +8,7 @@ import {
   Download,
   Upload,
   Info,
+  RefreshCw,
 } from 'lucide-react';
 import type { AppSettings, Plot, WeighingRecord } from '../types/weighing';
 
@@ -43,7 +44,31 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
   const [plotOwner, setPlotOwner] = useState('');
   const [newWeigher, setNewWeigher] = useState('');
   const [backupMsg, setBackupMsg] = useState('');
+  const [updateMsg, setUpdateMsg] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCheckUpdate = async () => {
+    setIsUpdating(true);
+    setUpdateMsg('Đang kiểm tra và tải bản cập nhật mới nhất...');
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          await reg.update();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 400);
+    } catch {
+      window.location.reload();
+    }
+  };
 
   const handleAddPlot = (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,7 +396,21 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
             Phiên bản: <span className="rounded-lg bg-emerald-700 px-2.5 py-0.5 text-sm font-black text-white">v1.0.0</span>
           </div>
           <div className="text-sm font-medium text-slate-600">
-            Hỗ trợ cân lúa ghi sổ 5×5, trừ bao quy ký, tính tiền, quản lý khuông đất, người cân và báo cáo số liệu offline trên WebApp & Android APK.
+            Hỗ trợ cân lúa ghi sổ 5×5, trừ bao quy ký, tính tiền, chi phí & lợi nhuận, quản lý khuông đất, người cân và báo cáo số liệu offline trên WebApp & Android APK.
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              disabled={isUpdating}
+              onClick={handleCheckUpdate}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-base font-extrabold text-white shadow-sm hover:bg-emerald-800 active:scale-95 disabled:opacity-60"
+            >
+              <RefreshCw className={`h-5 w-5 ${isUpdating ? 'animate-spin' : ''}`} />
+              {isUpdating ? 'Đang cập nhật...' : 'Cập nhật phiên bản mới'}
+            </button>
+            {updateMsg && (
+              <p className="mt-2 text-sm font-bold text-emerald-800">{updateMsg}</p>
+            )}
           </div>
         </div>
       </div>

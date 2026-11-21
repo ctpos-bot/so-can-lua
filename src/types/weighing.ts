@@ -20,6 +20,12 @@ export interface WeighingTable {
   cells: (number | null)[][];
 }
 
+export interface ExpenseItem {
+  id: string;
+  name: string;
+  amount: number;
+}
+
 export interface WeighingRecord {
   id: string;
   code: string;
@@ -27,6 +33,8 @@ export interface WeighingRecord {
   date: string;
   plotId?: string;
   plotName: string;
+  /** Diện tích khuông đất (số công) để tính trung bình/công */
+  areaCong?: number;
   riceVariety: string;
   weigherName: string;
   farmerName: string;
@@ -34,6 +42,8 @@ export interface WeighingRecord {
   tareConfig: TareConfig;
   tables: WeighingTable[];
   deposit: number;
+  /** Danh sách chi phí (giống, phân, thuốc, công cắt, vận chuyển...) */
+  expenses?: ExpenseItem[];
   notes: string;
   createdAt: number;
   updatedAt: number;
@@ -63,4 +73,10 @@ export interface RecordSummary {
   netWeight: number;
   totalAmount: number;
   remainingAmount: number;
+  totalExpenses: number;
+  profit: number;
+  bagsPerCong: number | null;
+  kgPerCong: number | null;
+  amountPerCong: number | null;
+  profitPerCong: number | null;
 }

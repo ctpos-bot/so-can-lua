@@ -178,27 +178,31 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-4 gap-2 rounded-xl bg-slate-50 p-2.5 text-center text-xs">
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl bg-slate-50 p-3 text-center text-sm">
                   <div>
-                    <div className="text-slate-500">Số bao</div>
-                    <div className="font-bold text-slate-800">{s.bagCount}</div>
+                    <div className="text-xs font-bold text-slate-500">Số bao</div>
+                    <div className="font-black text-slate-900">{s.bagCount}</div>
                   </div>
                   <div>
-                    <div className="text-slate-500">Tổng thô</div>
-                    <div className="font-bold text-slate-800">
-                      {formatWeight(s.grossWeight)} kg
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Trừ bao</div>
-                    <div className="font-bold text-rose-600">
-                      -{formatWeight(s.tareWeight)} kg
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Ký thực</div>
-                    <div className="font-bold text-emerald-800">
+                    <div className="text-xs font-bold text-slate-500">Ký thực</div>
+                    <div className="font-black text-emerald-800">
                       {formatWeight(s.netWeight)} kg
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-500">Chi phí</div>
+                    <div className="font-black text-rose-700">
+                      {formatCurrency(s.totalExpenses)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-500">Lợi nhuận</div>
+                    <div
+                      className={`font-black ${
+                        s.profit >= 0 ? 'text-emerald-800' : 'text-rose-700'
+                      }`}
+                    >
+                      {formatCurrency(s.profit)}
                     </div>
                   </div>
                 </div>
@@ -207,26 +211,26 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                   <button
                     type="button"
                     onClick={() => onDuplicateRecord(rec)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-slate-200 px-3.5 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    <Copy className="h-4 w-4" />
                     Nhân bản
                   </button>
                   <button
                     type="button"
                     onClick={() => onDeleteRecord(rec.id)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-rose-200 px-3.5 py-2 text-sm font-bold text-rose-700 hover:bg-rose-50"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                     Xóa
                   </button>
                   <button
                     type="button"
                     onClick={() => onSelectRecord(rec)}
-                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-emerald-800"
                   >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    Mở / Sửa
+                    <Edit3 className="h-4 w-4" />
+                    Mở / Nhập chi phí
                   </button>
                 </div>
               </div>
