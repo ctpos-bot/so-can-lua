@@ -22,6 +22,13 @@ export function createEmptyTable(index: number): WeighingTable {
 export function parseWeightInput(raw: string): number | null {
   const cleaned = raw.trim().replace(/,/g, '.').replace(/\s+/g, '');
   if (!cleaned) return null;
+
+  // Nhập nhanh 3 chữ số không cần dấu phẩy: 555 => 55.5, 495 => 49.5
+  if (/^\d{3}$/.test(cleaned)) {
+    const num = Number(cleaned) / 10;
+    return num > 0 ? Math.round(num * 100) / 100 : null;
+  }
+
   const num = Number(cleaned);
   if (!Number.isFinite(num) || num <= 0) return null;
   return Math.round(num * 100) / 100;

@@ -182,7 +182,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             Bảng ghi trọng lượng từng bao (kg)
           </h3>
           <p className="text-sm font-medium text-slate-600">
-            Mỗi bảng 5 cột × 5 dòng (25 bao). Nhấn Enter để tự nhảy xuống ô dưới.
+            Mỗi bảng 5 cột × 5 dòng (25 bao). Nhập nhanh 3 số tự chia 10 (VD: <strong>555 → 55,5</strong>; <strong>495 → 49,5</strong>).
           </p>
         </div>
         <button
