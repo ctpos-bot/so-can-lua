@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">So Can Lua</string>
+    <string name="title_activity_main">So Can Lua</string>
+    <string name="package_name">com.canlua.app</string>
+    <string name="custom_url_scheme">com.canlua.app</string>
+</resources>
