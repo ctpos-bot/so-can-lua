@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local APK downloads
+*.apk
+*.zip
+so-can-lua-debug-apk/

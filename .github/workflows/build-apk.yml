@@ -5,6 +5,9 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -34,9 +37,18 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../So-can-lua.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: so-can-lua-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: So-can-lua.apk
+
+      - name: Publish Latest Release APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Sổ Cân Lúa - Bản mới nhất
+          files: So-can-lua.apk
+          overwrite_existing: true
