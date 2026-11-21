@@ -1,13 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Scale,
   BookOpen,
   BarChart3,
-  FolderCog,
+  Settings,
   Wheat,
   RefreshCw,
 } from 'lucide-react';
+import type { User as FirebaseUser } from 'firebase/auth';
 import type { AppSettings, Plot, WeighingRecord } from './types/weighing';
+import {
+  signInWithGoogle,
+  signOutGoogle,
+  subscribeAuth,
+} from './services/firebase';
+import { pushToCloud, syncWithCloud } from './services/cloudSync';
+import { MasterDataView, type SyncStatus } from './components/MasterDataView';
 import {
   calcRecordSummary,
   createEmptyTable,
@@ -31,7 +39,6 @@ import {
 import { WeighingForm } from './components/WeighingForm';
 import { RecordsList } from './components/RecordsList';
 import { ReportsView } from './components/ReportsView';
-import { MasterDataView } from './components/MasterDataView';
 
 type TabKey = 'weigh' | 'records' | 'reports' | 'settings';
 
@@ -76,6 +83,10 @@ export function App() {
   });
 
   const [savedBanner, setSavedBanner] = useState(false);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [authError, setAuthError] = useState('');
+  const skipNextCloudPush = useRef(false);
 
   useEffect(() => {
     saveRecords(records);
@@ -96,6 +107,89 @@ export function App() {
   useEffect(() => {
     saveDraft(activeRecord);
   }, [activeRecord]);
+
+  useEffect(() => {
+    const unsub = subscribeAuth(async (u) => {
+      setUser(u);
+      if (u) {
+        setSyncStatus('syncing');
+        try {
+          const merged = await syncWithCloud(u.uid, {
+            records: loadRecords(),
+            plots: loadPlots(),
+            weighers: loadWeighers(),
+            settings: loadSettings(),
+          });
+          skipNextCloudPush.current = true;
+          setRecords(merged.records);
+          setPlots(merged.plots);
+          setWeighers(merged.weighers);
+          setSettings(merged.settings);
+          setSyncStatus('synced');
+        } catch {
+          setSyncStatus('error');
+        }
+      } else {
+        setSyncStatus('idle');
+      }
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    if (skipNextCloudPush.current) {
+      skipNextCloudPush.current = false;
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSyncStatus('syncing');
+      try {
+        await pushToCloud(user.uid, { records, plots, weighers, settings });
+        setSyncStatus('synced');
+      } catch {
+        setSyncStatus('error');
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [user, records, plots, weighers, settings]);
+
+  const handleSignInGoogle = async () => {
+    setAuthError('');
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setAuthError(
+        err instanceof Error ? err.message : 'Không thể đăng nhập Google.'
+      );
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthError('');
+    await signOutGoogle();
+  };
+
+  const handleSyncNow = async () => {
+    if (!user) return;
+    setSyncStatus('syncing');
+    try {
+      const merged = await syncWithCloud(user.uid, {
+        records,
+        plots,
+        weighers,
+        settings,
+      });
+      skipNextCloudPush.current = true;
+      setRecords(merged.records);
+      setPlots(merged.plots);
+      setWeighers(merged.weighers);
+      setSettings(merged.settings);
+      setSyncStatus('synced');
+    } catch {
+      setSyncStatus('error');
+    }
+  };
 
   const isEditingExisting = records.some((r) => r.id === activeRecord.id);
   const activeSummary = calcRecordSummary(activeRecord);
@@ -179,7 +273,7 @@ export function App() {
     { key: 'weigh', label: 'Cân Lúa', icon: <Scale className="h-7 w-7" /> },
     { key: 'records', label: 'Sổ Cân', icon: <BookOpen className="h-7 w-7" /> },
     { key: 'reports', label: 'Báo Cáo', icon: <BarChart3 className="h-7 w-7" /> },
-    { key: 'settings', label: 'Danh Mục', icon: <FolderCog className="h-7 w-7" /> },
+    { key: 'settings', label: 'Cài Đặt', icon: <Settings className="h-7 w-7" /> },
   ];
 
   return (
@@ -294,6 +388,12 @@ export function App() {
             weighers={weighers}
             settings={settings}
             records={records}
+            user={user}
+            syncStatus={syncStatus}
+            authError={authError}
+            onSignInGoogle={handleSignInGoogle}
+            onSignOut={handleSignOut}
+            onSyncNow={handleSyncNow}
             onUpdatePlots={setPlots}
             onUpdateWeighers={setWeighers}
             onUpdateSettings={setSettings}

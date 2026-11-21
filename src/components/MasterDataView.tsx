@@ -9,14 +9,28 @@ import {
   Upload,
   Info,
   RefreshCw,
+  Cloud,
+  LogIn,
+  LogOut,
+  CheckCircle2,
 } from 'lucide-react';
+import type { User as FirebaseUser } from 'firebase/auth';
 import type { AppSettings, Plot, WeighingRecord } from '../types/weighing';
+import { isFirebaseConfigured } from '../services/firebase';
+
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
 
 interface MasterDataViewProps {
   plots: Plot[];
   weighers: string[];
   settings: AppSettings;
   records: WeighingRecord[];
+  user: FirebaseUser | null;
+  syncStatus: SyncStatus;
+  authError: string;
+  onSignInGoogle: () => void;
+  onSignOut: () => void;
+  onSyncNow: () => void;
   onUpdatePlots: (plots: Plot[]) => void;
   onUpdateWeighers: (weighers: string[]) => void;
   onUpdateSettings: (settings: AppSettings) => void;
@@ -33,6 +47,12 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
   weighers,
   settings,
   records,
+  user,
+  syncStatus,
+  authError,
+  onSignInGoogle,
+  onSignOut,
+  onSyncNow,
   onUpdatePlots,
   onUpdateWeighers,
   onUpdateSettings,
@@ -138,6 +158,103 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
 
   return (
     <div className="space-y-4 pb-6">
+      {/* Tài khoản & Đồng bộ Gmail (Tùy chọn) */}
+      <div className="rounded-2xl border-2 border-emerald-300 bg-white p-4 shadow-sm">
+        <h2 className="mb-2 flex items-center gap-2 text-lg font-extrabold text-slate-900">
+          <Cloud className="h-5 w-5 text-emerald-700" />
+          Tài khoản & Lưu trữ theo Gmail
+        </h2>
+
+        {user ? (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-50 p-3">
+              <div className="flex items-center gap-3">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
+                    className="h-11 w-11 rounded-full border-2 border-emerald-600"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-700 text-lg font-black text-white">
+                    {(user.email || 'G')[0].toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <div className="text-base font-extrabold text-slate-900">
+                    {user.displayName || 'Tài khoản Google'}
+                  </div>
+                  <div className="text-sm font-semibold text-emerald-800">
+                    {user.email}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-sm font-bold">
+                {syncStatus === 'syncing' && (
+                  <span className="text-amber-700">Đang đồng bộ...</span>
+                )}
+                {syncStatus === 'synced' && (
+                  <span className="inline-flex items-center gap-1 text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Đã lưu trên Gmail
+                  </span>
+                )}
+                {syncStatus === 'error' && (
+                  <span className="text-rose-700">Lỗi đồng bộ (vẫn lưu trên máy)</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onSyncNow}
+                disabled={syncStatus === 'syncing'}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-extrabold text-white hover:bg-emerald-800 active:scale-95 disabled:opacity-60"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`}
+                />
+                Đồng bộ ngay
+              </button>
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-5 py-3 text-sm font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
+              >
+                <LogOut className="h-4 w-4" />
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-slate-600">
+              Mặc định sổ cân được <strong>lưu cục bộ trên máy này</strong> (không cần đăng nhập). Nếu muốn lưu trữ lên đám mây theo Gmail để đổi máy không mất dữ liệu, hãy đăng nhập bên dưới:
+            </p>
+            <button
+              type="button"
+              disabled={!isFirebaseConfigured}
+              onClick={onSignInGoogle}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-base font-extrabold text-white shadow-sm hover:bg-emerald-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            >
+              <LogIn className="h-5 w-5" />
+              Đăng nhập bằng Google (Gmail)
+            </button>
+            {!isFirebaseConfigured && (
+              <p className="rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900">
+                Chưa gắn cấu hình Firebase (biến môi trường <code>VITE_FIREBASE_*</code>). Hiện tại ứng dụng đang lưu dữ liệu cục bộ trên máy bình thường.
+              </p>
+            )}
+          </div>
+        )}
+
+        {authError && (
+          <p className="mt-2 text-sm font-bold text-rose-700">{authError}</p>
+        )}
+      </div>
+
       {/* Danh mục Khuông đất */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-slate-800">
