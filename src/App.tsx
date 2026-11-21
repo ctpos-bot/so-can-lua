@@ -293,7 +293,7 @@ export function App() {
             </div>
             <div>
               <h1 className="text-lg font-black leading-tight tracking-tight">
-                Sổ Cân Lúa <span className="text-xs font-bold text-emerald-200">v1.0.0</span>
+                Sổ Cân Lúa <span className="text-xs font-bold text-emerald-200">v1.2.0</span>
               </h1>
               <p className="text-xs font-semibold text-emerald-100">
                 Ghi mã • Trừ bao • Tính tiền
@@ -364,10 +364,17 @@ export function App() {
             isEditingExisting={isEditingExisting}
             savedBanner={savedBanner}
             quickThreeDigitDecimal={settings.quickThreeDigitDecimal}
+            voiceFeedback={settings.voiceFeedback}
             onToggleQuickThreeDigit={() =>
               setSettings((prev) => ({
                 ...prev,
                 quickThreeDigitDecimal: !prev.quickThreeDigitDecimal,
+              }))
+            }
+            onToggleVoiceFeedback={() =>
+              setSettings((prev) => ({
+                ...prev,
+                voiceFeedback: !prev.voiceFeedback,
               }))
             }
             onChange={setActiveRecord}

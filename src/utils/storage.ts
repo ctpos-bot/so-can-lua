@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   defaultWeigherName: 'Anh Ba',
   quickThreeDigitDecimal: true,
+  voiceFeedback: false,
 };
 
 export const SAMPLE_PLOTS: Plot[] = [
@@ -53,6 +54,7 @@ export function createSampleRecords(): WeighingRecord[] {
       plotId: 'plot-1',
       plotName: 'Khuông Bảy Xã',
       areaCong: 5,
+      season: 'Thu Đông 2026',
       riceVariety: 'OM 18',
       weigherName: 'Anh Ba',
       farmerName: 'Chú Tư',

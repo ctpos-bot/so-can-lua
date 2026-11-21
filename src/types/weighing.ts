@@ -35,6 +35,8 @@ export interface WeighingRecord {
   plotName: string;
   /** Diện tích khuông đất (số công) để tính trung bình/công */
   areaCong?: number;
+  /** Vụ mùa (VD: Đông Xuân 2026, Hè Thu 2026, Thu Đông 2026) */
+  season?: string;
   riceVariety: string;
   weigherName: string;
   farmerName: string;
@@ -64,6 +66,8 @@ export interface AppSettings {
   defaultWeigherName: string;
   /** Tự động đổi 3 chữ số liền thành số lẻ (VD: 555 => 55,5) */
   quickThreeDigitDecimal: boolean;
+  /** Đọc giọng nói xác nhận trọng lượng mỗi bao */
+  voiceFeedback: boolean;
 }
 
 export interface RecordSummary {

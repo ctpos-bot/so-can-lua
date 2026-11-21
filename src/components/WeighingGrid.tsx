@@ -1,5 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { Plus, Trash2, Calculator, Delete, CornerDownLeft } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  Plus,
+  Trash2,
+  Calculator,
+  Delete,
+  CornerDownLeft,
+  Volume2,
+  VolumeX,
+  AlertTriangle,
+} from 'lucide-react';
 import type { WeighingTable } from '../types/weighing';
 import {
   COLS_PER_TABLE,
@@ -9,11 +18,14 @@ import {
   formatWeight,
   parseWeightInput,
 } from '../utils/calculations';
+import { speakWeight } from '../utils/speech';
 
 interface WeighingGridProps {
   tables: WeighingTable[];
   quickThreeDigitDecimal: boolean;
+  voiceFeedback: boolean;
   onToggleQuickThreeDigit: () => void;
+  onToggleVoiceFeedback: () => void;
   onChangeTables: (tables: WeighingTable[]) => void;
 }
 
@@ -26,7 +38,9 @@ interface ActiveCell {
 export const WeighingGrid: React.FC<WeighingGridProps> = ({
   tables,
   quickThreeDigitDecimal,
+  voiceFeedback,
   onToggleQuickThreeDigit,
+  onToggleVoiceFeedback,
   onChangeTables,
 }) => {
   const [activeCell, setActiveCell] = useState<ActiveCell | null>(null);
@@ -34,11 +48,32 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
   const [useCustomNumpad, setUseCustomNumpad] = useState<boolean>(false);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+  const abnormalCount = useMemo(() => {
+    let count = 0;
+    for (const t of tables) {
+      for (const col of t.cells) {
+        for (const v of col) {
+          if (v !== null && (v < 25 || v > 80)) count += 1;
+        }
+      }
+    }
+    return count;
+  }, [tables]);
+
   const getCellKey = (tIdx: number, col: number, row: number) =>
     `${tIdx}-${col}-${row}`;
 
-  const commitCell = (tIdx: number, col: number, row: number, raw: string) => {
+  const commitCell = (
+    tIdx: number,
+    col: number,
+    row: number,
+    raw: string,
+    speak = false
+  ) => {
     const parsed = parseWeightInput(raw, quickThreeDigitDecimal);
+    if (speak && voiceFeedback && parsed !== null) {
+      speakWeight(parsed);
+    }
     const updated = tables.map((tbl, idx) => {
       if (idx !== tIdx) return tbl;
       const newCells = tbl.cells.map((c, cIdx) =>
@@ -95,23 +130,23 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
   ) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      commitCell(tIdx, col, row, editingText);
+      commitCell(tIdx, col, row, editingText, true);
       moveToNextCell(tIdx, col, row);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      commitCell(tIdx, col, row, editingText);
+      commitCell(tIdx, col, row, editingText, true);
       if (row + 1 < ROWS_PER_TABLE) focusCell(tIdx, col, row + 1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      commitCell(tIdx, col, row, editingText);
+      commitCell(tIdx, col, row, editingText, true);
       if (row - 1 >= 0) focusCell(tIdx, col, row - 1);
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
-      commitCell(tIdx, col, row, editingText);
+      commitCell(tIdx, col, row, editingText, true);
       if (col + 1 < COLS_PER_TABLE) focusCell(tIdx, col + 1, row);
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      commitCell(tIdx, col, row, editingText);
+      commitCell(tIdx, col, row, editingText, true);
       if (col - 1 >= 0) focusCell(tIdx, col - 1, row);
     }
   };
@@ -151,7 +186,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
     const { tableIndex, col, row } = activeCell;
 
     if (key === 'NEXT') {
-      commitCell(tableIndex, col, row, editingText);
+      commitCell(tableIndex, col, row, editingText, true);
       moveToNextCell(tableIndex, col, row);
       return;
     }
@@ -208,7 +243,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
           <button
             type="button"
             onClick={() => setUseCustomNumpad((prev) => !prev)}
-            className={`inline-flex flex-1 min-w-[180px] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold transition active:scale-95 ${
+            className={`inline-flex flex-1 min-w-[165px] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold transition active:scale-95 ${
               useCustomNumpad
                 ? 'bg-emerald-700 text-white shadow-sm'
                 : 'border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
@@ -217,8 +252,33 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
             <Calculator className="h-5 w-5" />
             {useCustomNumpad ? 'Phím số nhanh: BẬT' : 'Bật phím số nhanh'}
           </button>
+          <button
+            type="button"
+            onClick={onToggleVoiceFeedback}
+            className={`inline-flex flex-1 min-w-[155px] items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold transition active:scale-95 ${
+              voiceFeedback
+                ? 'bg-sky-700 text-white shadow-sm'
+                : 'border-2 border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            {voiceFeedback ? (
+              <Volume2 className="h-5 w-5" />
+            ) : (
+              <VolumeX className="h-5 w-5" />
+            )}
+            {voiceFeedback ? 'Đọc số: BẬT' : 'Đọc số: TẮT'}
+          </button>
         </div>
       </div>
+
+      {abnormalCount > 0 && (
+        <div className="flex items-center gap-2.5 rounded-xl border-2 border-rose-300 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-800">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
+          <span>
+            Cảnh báo: Có <strong>{abnormalCount} ô</strong> trọng lượng bất thường (&lt; 25 kg hoặc &gt; 80 kg), anh kiểm tra lại tránh gõ nhầm nhé!
+          </span>
+        </div>
+      )}
 
       {tables.map((table, tIdx) => {
         const colTotals = calcTableColumnTotals(table);
@@ -289,11 +349,20 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                             ? String(cellVal).replace('.', ',')
                             : '';
 
+                        const isAbnormal =
+                          cellVal !== null &&
+                          cellVal !== undefined &&
+                          (cellVal < 25 || cellVal > 80);
+
                         return (
                           <td
                             key={cIdx}
                             className={`border-r border-slate-200 p-0 last:border-r-0 ${
-                              isActive ? 'bg-amber-50 ring-2 ring-inset ring-emerald-700' : ''
+                              isActive
+                                ? 'bg-amber-50 ring-2 ring-inset ring-emerald-700'
+                                : isAbnormal
+                                  ? 'bg-rose-50 ring-2 ring-inset ring-rose-500'
+                                  : ''
                             }`}
                           >
                             {useCustomNumpad ? (
@@ -301,9 +370,11 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                                 type="button"
                                 onClick={() => focusCell(tIdx, cIdx, rIdx)}
                                 className={`h-14 w-full px-1 text-center text-lg font-black tabular-nums transition ${
-                                  displayVal
-                                    ? 'text-slate-950'
-                                    : 'text-slate-300'
+                                  isAbnormal
+                                    ? 'text-rose-700'
+                                    : displayVal
+                                      ? 'text-slate-950'
+                                      : 'text-slate-300'
                                 }`}
                               >
                                 {displayVal || '—'}
@@ -334,7 +405,9 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
                                   );
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, tIdx, cIdx, rIdx)}
-                                className="h-14 w-full bg-transparent px-1 text-center text-lg font-black text-slate-950 tabular-nums placeholder:text-slate-300 focus:outline-none"
+                                className={`h-14 w-full bg-transparent px-1 text-center text-lg font-black tabular-nums placeholder:text-slate-300 focus:outline-none ${
+                                  isAbnormal ? 'text-rose-700' : 'text-slate-950'
+                                }`}
                               />
                             )}
                           </td>

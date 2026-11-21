@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Calendar,
   MapPin,
@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   Wallet,
+  Share2,
 } from 'lucide-react';
 import type {
   ExpenseItem,
@@ -24,6 +25,7 @@ import {
   formatCurrency,
   formatWeight,
 } from '../utils/calculations';
+import { shareOrDownloadReceipt } from '../utils/shareReceipt';
 import { WeighingGrid } from './WeighingGrid';
 
 interface WeighingFormProps {
@@ -33,7 +35,9 @@ interface WeighingFormProps {
   isEditingExisting: boolean;
   savedBanner: boolean;
   quickThreeDigitDecimal: boolean;
+  voiceFeedback: boolean;
   onToggleQuickThreeDigit: () => void;
+  onToggleVoiceFeedback: () => void;
   onChange: (updated: WeighingRecord) => void;
   onSave: () => void;
   onNewRecord: () => void;
@@ -47,13 +51,32 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
   isEditingExisting,
   savedBanner,
   quickThreeDigitDecimal,
+  voiceFeedback,
   onToggleQuickThreeDigit,
+  onToggleVoiceFeedback,
   onChange,
   onSave,
   onNewRecord,
   onPrint,
 }) => {
   const summary = calcRecordSummary(record);
+  const [shareMsg, setShareMsg] = useState('');
+
+  const handleShareImage = async () => {
+    setShareMsg('');
+    try {
+      const outcome = await shareOrDownloadReceipt(record, summary);
+      setShareMsg(
+        outcome === 'shared'
+          ? 'Đã mở chia sẻ ảnh phiếu cân!'
+          : 'Đã tải ảnh phiếu cân (PNG) về máy!'
+      );
+      setTimeout(() => setShareMsg(''), 3000);
+    } catch {
+      setShareMsg('Đã hủy chia sẻ.');
+      setTimeout(() => setShareMsg(''), 2500);
+    }
+  };
 
   const handlePlotSelect = (plotId: string) => {
     if (!plotId) {
@@ -153,6 +176,14 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
           </button>
           <button
             type="button"
+            onClick={handleShareImage}
+            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-sky-400 bg-sky-50 px-4 py-3 text-base font-extrabold text-sky-900 hover:bg-sky-100 active:scale-95"
+          >
+            <Share2 className="h-5 w-5" />
+            Gửi Zalo / Ảnh
+          </button>
+          <button
+            type="button"
             onClick={onPrint}
             className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
           >
@@ -174,6 +205,13 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
         <div className="no-print flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800">
           <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           Đã lưu phiếu cân {record.code} vào sổ!
+        </div>
+      )}
+
+      {shareMsg && (
+        <div className="no-print flex items-center gap-2 rounded-xl border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-900">
+          <Share2 className="h-5 w-5 text-sky-700" />
+          {shareMsg}
         </div>
       )}
 
@@ -335,6 +373,36 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
               className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
             />
           </div>
+
+          {/* Vụ mùa */}
+          <div className="sm:col-span-2 lg:col-span-3">
+            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+              Vụ mùa (để so sánh các vụ)
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                placeholder="VD: Đông Xuân 2026, Hè Thu 2026..."
+                value={record.season || ''}
+                onChange={(e) => onChange({ ...record, season: e.target.value })}
+                className="min-w-[220px] flex-1 rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+              />
+              {['Đông Xuân 2026', 'Hè Thu 2026', 'Thu Đông 2026'].map((sName) => (
+                <button
+                  key={sName}
+                  type="button"
+                  onClick={() => onChange({ ...record, season: sName })}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-extrabold transition ${
+                    record.season === sName
+                      ? 'bg-emerald-700 text-white'
+                      : 'bg-slate-200 text-slate-800 hover:bg-slate-300'
+                  }`}
+                >
+                  {sName}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Trừ bao => tính ký */}
@@ -469,7 +537,9 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
       <WeighingGrid
         tables={record.tables}
         quickThreeDigitDecimal={quickThreeDigitDecimal}
+        voiceFeedback={voiceFeedback}
         onToggleQuickThreeDigit={onToggleQuickThreeDigit}
+        onToggleVoiceFeedback={onToggleVoiceFeedback}
         onChangeTables={(tables) => onChange({ ...record, tables })}
       />
 

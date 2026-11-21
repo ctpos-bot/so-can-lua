@@ -458,6 +458,34 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
             {settings.quickThreeDigitDecimal ? 'ĐANG BẬT' : 'ĐANG TẮT'}
           </button>
         </div>
+
+        {/* Bật / tắt đọc giọng nói */}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-slate-200 bg-slate-50 p-3.5">
+          <div>
+            <div className="text-base font-extrabold text-slate-900">
+              Đọc giọng nói xác nhận số vừa nhập
+            </div>
+            <div className="text-sm font-medium text-slate-600">
+              Khi bấm Tiếp/Enter, điện thoại tự đọc lại số ký (VD: &quot;55 ký rưỡi&quot;).
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onUpdateSettings({
+                ...settings,
+                voiceFeedback: !settings.voiceFeedback,
+              })
+            }
+            className={`min-w-[130px] rounded-xl px-5 py-3 text-base font-black transition active:scale-95 ${
+              settings.voiceFeedback
+                ? 'bg-sky-700 text-white shadow-sm'
+                : 'border-2 border-slate-300 bg-white text-slate-700'
+            }`}
+          >
+            {settings.voiceFeedback ? 'ĐANG BẬT' : 'ĐANG TẮT'}
+          </button>
+        </div>
       </div>
 
       {/* Sao lưu & Khôi phục */}
@@ -510,7 +538,7 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
             Tên ứng dụng: <strong className="font-black text-emerald-900">Sổ Cân Lúa</strong>
           </div>
           <div>
-            Phiên bản: <span className="rounded-lg bg-emerald-700 px-2.5 py-0.5 text-sm font-black text-white">v1.0.0</span>
+            Phiên bản: <span className="rounded-lg bg-emerald-700 px-2.5 py-0.5 text-sm font-black text-white">v1.2.0</span>
           </div>
           <div className="text-sm font-medium text-slate-600">
             Hỗ trợ cân lúa ghi sổ 5×5, trừ bao quy ký, tính tiền, chi phí & lợi nhuận, quản lý khuông đất, người cân và báo cáo số liệu offline trên WebApp & Android APK.

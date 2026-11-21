@@ -30,6 +30,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
   const [toDate, setToDate] = useState('');
   const [plotFilter, setPlotFilter] = useState('');
   const [weigherFilter, setWeigherFilter] = useState('');
+  const [seasonFilter, setSeasonFilter] = useState('');
 
   const uniquePlots = useMemo(() => {
     const s = new Set<string>();
@@ -41,6 +42,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
     const s = new Set<string>();
     records.forEach((r) => {
       if (r.weigherName) s.add(r.weigherName);
+    });
+    return Array.from(s);
+  }, [records]);
+
+  const uniqueSeasons = useMemo(() => {
+    const s = new Set<string>();
+    records.forEach((r) => {
+      if (r.season) s.add(r.season);
     });
     return Array.from(s);
   }, [records]);
@@ -64,9 +73,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
       const pName = rec.plotName || 'Chưa phân loại';
       if (plotFilter && pName !== plotFilter) return false;
       if (weigherFilter && rec.weigherName !== weigherFilter) return false;
+      if (seasonFilter && (rec.season || '') !== seasonFilter) return false;
       return true;
     });
-  }, [records, preset, fromDate, toDate, plotFilter, weigherFilter]);
+  }, [records, preset, fromDate, toDate, plotFilter, weigherFilter, seasonFilter]);
 
   const totals = useMemo(() => {
     let bagCount = 0;
@@ -169,6 +179,49 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
     }
 
     return Array.from(map.values()).sort((a, b) => b.netKg - a.netKg);
+  }, [filteredRecords, plots]);
+
+  const bySeason = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        season: string;
+        records: number;
+        bags: number;
+        netKg: number;
+        amount: number;
+        expenses: number;
+        profit: number;
+        areaCong: number;
+      }
+    >();
+
+    for (const r of filteredRecords) {
+      const key = r.season || 'Chưa ghi vụ mùa';
+      const s = calcRecordSummary(r);
+      const fallbackArea = plots.find((p) => p.name === r.plotName)?.areaCong || 0;
+      const recArea = r.areaCong && r.areaCong > 0 ? r.areaCong : fallbackArea;
+      const existing = map.get(key) || {
+        season: key,
+        records: 0,
+        bags: 0,
+        netKg: 0,
+        amount: 0,
+        expenses: 0,
+        profit: 0,
+        areaCong: 0,
+      };
+      existing.records += 1;
+      existing.bags += s.bagCount;
+      existing.netKg = Math.round((existing.netKg + s.netWeight) * 100) / 100;
+      existing.amount += s.totalAmount;
+      existing.expenses += s.totalExpenses;
+      existing.profit += s.profit;
+      existing.areaCong = Math.round((existing.areaCong + recArea) * 100) / 100;
+      map.set(key, existing);
+    }
+
+    return Array.from(map.values());
   }, [filteredRecords, plots]);
 
   const byWeigher = useMemo(() => {
@@ -295,11 +348,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
           </div>
         )}
 
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <select
             value={plotFilter}
             onChange={(e) => setPlotFilter(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800"
+            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-800"
           >
             <option value="">Tất cả khuông đất</option>
             {uniquePlots.map((p) => (
@@ -312,12 +365,25 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
           <select
             value={weigherFilter}
             onChange={(e) => setWeigherFilter(e.target.value)}
-            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-800"
+            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-800"
           >
             <option value="">Tất cả người cân</option>
             {uniqueWeighers.map((w) => (
               <option key={w} value={w}>
                 {w}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={seasonFilter}
+            onChange={(e) => setSeasonFilter(e.target.value)}
+            className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-800"
+          >
+            <option value="">Tất cả vụ mùa</option>
+            {uniqueSeasons.map((s) => (
+              <option key={s} value={s}>
+                {s}
               </option>
             ))}
           </select>
@@ -501,6 +567,68 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ records, plots }) => {
           </div>
         )}
       </div>
+
+      {/* Bảng so sánh theo Vụ mùa */}
+      {bySeason.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 flex items-center gap-1.5 text-base font-extrabold text-slate-900">
+            <TrendingUp className="h-5 w-5 text-emerald-700" />
+            So sánh hiệu quả theo Vụ mùa
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-slate-100 text-xs font-extrabold text-slate-700">
+                  <th className="py-2.5 px-2">Vụ mùa</th>
+                  <th className="py-2.5 px-2 text-right">Công</th>
+                  <th className="py-2.5 px-2 text-right">Ký thực</th>
+                  <th className="py-2.5 px-2 text-right">Ký/công</th>
+                  <th className="py-2.5 px-2 text-right">Tiền lúa</th>
+                  <th className="py-2.5 px-2 text-right">Chi phí</th>
+                  <th className="py-2.5 px-2 text-right">Lợi nhuận</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {bySeason.map((item) => {
+                  const hasArea = item.areaCong > 0;
+                  return (
+                    <tr key={item.season} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-2 font-extrabold text-slate-900">
+                        {item.season}{' '}
+                        <span className="text-xs font-normal text-slate-500">
+                          ({item.records} phiếu)
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-bold text-slate-700">
+                        {hasArea ? formatWeight(item.areaCong) : '—'}
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-bold text-slate-800">
+                        {formatWeight(item.netKg)} kg
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-extrabold text-emerald-800">
+                        {hasArea ? `${formatWeight(item.netKg / item.areaCong)} kg` : '—'}
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-bold text-amber-900">
+                        {formatCurrency(item.amount)}
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-bold text-rose-700">
+                        {formatCurrency(item.expenses)}
+                      </td>
+                      <td
+                        className={`py-2.5 px-2 text-right font-black ${
+                          item.profit >= 0 ? 'text-emerald-800' : 'text-rose-700'
+                        }`}
+                      >
+                        {formatCurrency(item.profit)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Theo người cân & Theo ngày */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -158,6 +158,7 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
   const headers = [
     'Mã phiếu',
     'Ngày cân',
+    'Vụ mùa',
     'Khuông đất',
     'Diện tích (công)',
     'Giống lúa',
@@ -192,6 +193,7 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
     return [
       rec.code,
       formatDateVN(rec.date),
+      rec.season || '',
       rec.plotName || 'Chưa phân loại',
       rec.areaCong || '',
       rec.riceVariety,
