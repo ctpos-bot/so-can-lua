@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Calculator, Trash2 } from 'lucide-react';
+import { Calculator, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import type { LanCan, PhieuCan } from '../../types';
 import { dinhDangSo, tinhTongKetPhieu } from '../../utils/format';
 import { BigButton } from '../ui/BigButton';
@@ -29,6 +29,7 @@ export const WeighScreen: React.FC<WeighScreenProps> = ({
   const [loiNhap, setLoiNhap] = useState('');
   const [choXacNhanSoLon, setChoXacNhanSoLon] = useState<number | null>(null);
   const [choXacNhanXoa, setChoXacNhanXoa] = useState<LanCan | null>(null);
+  const [moBanPhim, setMoBanPhim] = useState(true);
 
   const sapXep = useMemo(
     () => [...danhSachLanCan].sort((a, b) => a.thuTu - b.thuTu),
@@ -97,12 +98,13 @@ export const WeighScreen: React.FC<WeighScreenProps> = ({
     setDangSuaLanId(lan.id);
     setChuoiNhap(String(lan.soKy).replace('.', ','));
     setLoiNhap('');
+    setMoBanPhim(true);
   };
 
   const lanDangSua = sapXep.find((l) => l.id === dangSuaLanId) || null;
 
   return (
-    <div className="space-y-4 pb-28">
+    <div className={`space-y-4 ${moBanPhim ? 'pb-[430px]' : 'pb-44'}`}>
       {/* Trên cùng: TỔNG KÝ và SỐ BAO luôn hiển thị to */}
       <div className="sticky top-[68px] z-20 rounded-2xl border-2 border-[#111111] bg-[#1B5E20] p-4 text-white shadow-md">
         <div className="flex items-center justify-between gap-2 text-body font-bold">
@@ -176,58 +178,6 @@ export const WeighScreen: React.FC<WeighScreenProps> = ({
         )}
       </div>
 
-      {/* Dưới cùng: Ô hiển thị số đang bấm + Bàn phím số riêng của app */}
-      <div className="rounded-2xl border-2 border-[#111111] bg-white p-3 shadow-sm">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-body font-extrabold text-[#111111]">
-            {lanDangSua
-              ? `Đang sửa bao #${lanDangSua.thuTu}`
-              : `Ghi bao #${sapXep.length + 1}`}
-          </span>
-          {lanDangSua && (
-            <button
-              type="button"
-              onClick={() => setChoXacNhanXoa(lanDangSua)}
-              className="inline-flex min-h-[64px] items-center gap-2 rounded-xl border-2 border-[#C62828] bg-white px-4 text-body font-extrabold text-[#C62828]"
-            >
-              <Trash2 className="h-6 w-6" />
-              <span>Xóa lần cân này</span>
-            </button>
-          )}
-        </div>
-
-        <div className="mb-2 flex min-h-[72px] items-center justify-between rounded-2xl border-2 border-[#111111] bg-[#f5f5f5] px-4">
-          <span className="text-body font-bold text-[#111111]">Số ký:</span>
-          <span className="text-metric font-extrabold text-[#1B5E20]">
-            {chuoiNhap || '0'} kg
-          </span>
-        </div>
-
-        {loiNhap && (
-          <p className="mb-2 text-body font-bold text-[#C62828]">{loiNhap}</p>
-        )}
-
-        <NumberPad
-          onDigit={(d) => {
-            setLoiNhap('');
-            setChuoiNhap((prev) => (prev.length >= 6 ? prev : prev + d));
-          }}
-          onComma={() => {
-            setLoiNhap('');
-            setChuoiNhap((prev) => {
-              if (prev.includes(',')) return prev;
-              return prev ? `${prev},` : '0,';
-            });
-          }}
-          onBackspace={() => {
-            setLoiNhap('');
-            setChuoiNhap((prev) => prev.slice(0, -1));
-          }}
-          onSubmit={() => void handleBamGhi()}
-          submitLabel={lanDangSua ? 'LƯU' : 'GHI'}
-        />
-      </div>
-
       {/* Nút chuyển sang Tổng kết */}
       <BigButton
         variant="accent"
@@ -236,6 +186,85 @@ export const WeighScreen: React.FC<WeighScreenProps> = ({
       >
         Xem Tổng kết & Tính tiền
       </BigButton>
+
+      {/* Bàn phím số nổi cố định phía trên thanh điều hướng dưới */}
+      <div className="fixed bottom-[82px] left-0 right-0 z-30 mx-auto max-w-lg px-2">
+        <div className="rounded-t-3xl border-2 border-[#111111] bg-white p-3 shadow-2xl">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-body font-extrabold text-[#111111]">
+              {lanDangSua
+                ? `Sửa bao #${lanDangSua.thuTu}`
+                : `Ghi bao #${sapXep.length + 1}`}
+            </span>
+
+            <div className="flex items-center gap-2">
+              {lanDangSua && (
+                <button
+                  type="button"
+                  onClick={() => setChoXacNhanXoa(lanDangSua)}
+                  className="inline-flex min-h-[64px] items-center gap-1.5 rounded-xl border-2 border-[#C62828] bg-white px-3 text-body font-extrabold text-[#C62828]"
+                >
+                  <Trash2 className="h-5 w-5" />
+                  <span>Xóa lần cân này</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setMoBanPhim((v) => !v)}
+                className="inline-flex min-h-[64px] items-center gap-1.5 rounded-xl border-2 border-[#111111] bg-[#f5f5f5] px-3 text-body font-extrabold text-[#111111]"
+              >
+                {moBanPhim ? (
+                  <>
+                    <ChevronDown className="h-6 w-6" />
+                    <span>Thu gọn</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronUp className="h-6 w-6" />
+                    <span>Mở phím</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {moBanPhim && (
+            <>
+              <div className="mb-2 flex min-h-[64px] items-center justify-between rounded-2xl border-2 border-[#111111] bg-[#f5f5f5] px-4">
+                <span className="text-body font-bold text-[#111111]">Số ký:</span>
+                <span className="text-metric font-extrabold text-[#1B5E20]">
+                  {chuoiNhap || '0'} kg
+                </span>
+              </div>
+
+              {loiNhap && (
+                <p className="mb-2 text-body font-bold text-[#C62828]">{loiNhap}</p>
+              )}
+
+              <NumberPad
+                onDigit={(d) => {
+                  setLoiNhap('');
+                  setChuoiNhap((prev) => (prev.length >= 6 ? prev : prev + d));
+                }}
+                onComma={() => {
+                  setLoiNhap('');
+                  setChuoiNhap((prev) => {
+                    if (prev.includes(',')) return prev;
+                    return prev ? `${prev},` : '0,';
+                  });
+                }}
+                onBackspace={() => {
+                  setLoiNhap('');
+                  setChuoiNhap((prev) => prev.slice(0, -1));
+                }}
+                onSubmit={() => void handleBamGhi()}
+                submitLabel={lanDangSua ? 'LƯU' : 'GHI'}
+              />
+            </>
+          )}
+        </div>
+      </div>
 
       <ConfirmDialog
         open={choXacNhanSoLon !== null}

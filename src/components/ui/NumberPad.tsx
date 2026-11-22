@@ -19,8 +19,8 @@ export const NumberPad: React.FC<NumberPadProps> = ({
   const keys = ['7', '8', '9', '4', '5', '6', '1', '2', '3'];
 
   return (
-    <div className="grid grid-cols-4 gap-3 bg-white pt-2">
-      <div className="col-span-3 grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-4 gap-2 bg-white pt-1">
+      <div className="col-span-3 grid grid-cols-3 gap-2">
         {keys.map((k) => (
           <button
             key={k}
@@ -50,22 +50,22 @@ export const NumberPad: React.FC<NumberPadProps> = ({
         </button>
       </div>
 
-      <div className="col-span-1 flex flex-col gap-3">
+      <div className="col-span-1 flex flex-col gap-2">
         <button
           type="button"
           onClick={onBackspace}
-          className="flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-[#C62828] bg-white px-2 text-body font-extrabold text-[#C62828] active:bg-[#fff5f5]"
+          className="flex min-h-[72px] flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-[#C62828] bg-white px-2 text-body font-extrabold text-[#C62828] active:bg-[#fff5f5]"
         >
-          <Delete className="h-7 w-7" />
+          <Delete className="h-6 w-6" />
           <span className="text-[20px]">XÓA</span>
         </button>
 
         <button
           type="button"
           onClick={onSubmit}
-          className="flex flex-1 min-h-[156px] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-[#1B5E20] bg-[#1B5E20] px-2 text-white shadow-sm active:bg-[#144618]"
+          className="flex flex-1 min-h-[152px] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-[#1B5E20] bg-[#1B5E20] px-2 text-white shadow-sm active:bg-[#144618]"
         >
-          <Check className="h-9 w-9" />
+          <Check className="h-8 w-8" />
           <span className="text-[24px] font-extrabold">{submitLabel}</span>
         </button>
       </div>
