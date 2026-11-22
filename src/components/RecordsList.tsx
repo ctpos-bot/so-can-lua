@@ -67,15 +67,15 @@ export const RecordsList: React.FC<RecordsListProps> = ({
           Sổ cân lúa ({filtered.length} phiếu)
         </h2>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          <div className="relative min-w-0">
+            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Tìm mã phiếu, khuông đất, người cân..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-emerald-600 focus:bg-white focus:outline-none"
+              className="w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-base font-medium focus:border-emerald-600 focus:bg-white focus:outline-none"
             />
           </div>
 
@@ -83,13 +83,13 @@ export const RecordsList: React.FC<RecordsListProps> = ({
             type="date"
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-600 focus:bg-white focus:outline-none"
+            className="block w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-medium focus:border-emerald-600 focus:bg-white focus:outline-none"
           />
 
           <select
             value={filterPlot}
             onChange={(e) => setFilterPlot(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-emerald-600 focus:bg-white focus:outline-none"
+            className="w-full min-w-0 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-medium focus:border-emerald-600 focus:bg-white focus:outline-none"
           >
             <option value="">Tất cả khuông đất</option>
             {uniquePlots.map((p) => (

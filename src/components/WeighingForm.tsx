@@ -165,35 +165,35 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
           </p>
         </div>
 
-        <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
+        <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={onNewRecord}
-            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-2.5 py-3 text-xs sm:text-base font-extrabold text-slate-800 whitespace-nowrap hover:bg-slate-50 active:scale-95"
           >
-            <FilePlus2 className="h-5 w-5" />
+            <FilePlus2 className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
             Phiếu mới
           </button>
           <button
             type="button"
             onClick={handleShareImage}
-            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-sky-400 bg-sky-50 px-4 py-3 text-base font-extrabold text-sky-900 hover:bg-sky-100 active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-sky-400 bg-sky-50 px-2.5 py-3 text-xs sm:text-base font-extrabold text-sky-900 whitespace-nowrap hover:bg-sky-100 active:scale-95"
           >
-            <Share2 className="h-5 w-5" />
-            Gửi Zalo / Ảnh
+            <Share2 className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+            Gửi Zalo
           </button>
           <button
             type="button"
             onClick={onPrint}
-            className="inline-flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-extrabold text-slate-800 hover:bg-slate-50 active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-slate-300 bg-white px-2.5 py-3 text-xs sm:text-base font-extrabold text-slate-800 whitespace-nowrap hover:bg-slate-50 active:scale-95"
           >
-            <Printer className="h-5 w-5" />
+            <Printer className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
             In phiếu
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 py-3 text-base font-black text-white shadow-sm hover:bg-emerald-800 active:scale-95"
+            className="col-span-3 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 py-3 text-base font-black text-white shadow-sm hover:bg-emerald-800 active:scale-95 sm:w-auto"
           >
             <Save className="h-5 w-5" />
             Lưu phiếu
@@ -222,7 +222,7 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
         </h2>
         <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           {/* Ngày cân */}
-          <div>
+          <div className="min-w-0">
             <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-slate-800">
               <Calendar className="h-4 w-4 text-emerald-700" />
               Ngày cân
@@ -231,22 +231,22 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
               type="date"
               value={record.date}
               onChange={(e) => onChange({ ...record, date: e.target.value })}
-              className="w-full rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+              className="block w-full min-w-0 max-w-full rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
             />
           </div>
 
           {/* Khuông đất */}
-          <div>
+          <div className="min-w-0">
             <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-slate-800">
               <MapPin className="h-4 w-4 text-emerald-700" />
               Khuông đất
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               {plots.length > 0 && (
                 <select
                   value={record.plotId || ''}
                   onChange={(e) => handlePlotSelect(e.target.value)}
-                  className="w-2/5 rounded-xl border-2 border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+                  className="w-full sm:w-2/5 min-w-0 rounded-xl border-2 border-slate-300 bg-slate-50 px-2.5 py-2.5 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
                 >
                   <option value="">-- Chọn nhanh --</option>
                   {plots.map((p) => (
@@ -263,7 +263,7 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
                 onChange={(e) =>
                   onChange({ ...record, plotId: undefined, plotName: e.target.value })
                 }
-                className="flex-1 rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+                className="w-full min-w-0 flex-1 rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
               />
             </div>
           </div>
@@ -385,7 +385,7 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
                 placeholder="VD: Đông Xuân 2026, Hè Thu 2026..."
                 value={record.season || ''}
                 onChange={(e) => onChange({ ...record, season: e.target.value })}
-                className="min-w-[220px] flex-1 rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+                className="w-full min-w-0 sm:w-auto sm:flex-1 rounded-xl border-2 border-slate-300 bg-slate-50 px-3 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
               />
               {['Đông Xuân 2026', 'Hè Thu 2026', 'Thu Đông 2026'].map((sName) => (
                 <button
@@ -729,7 +729,7 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
                   onChange={(e) =>
                     handleUpdateExpense(item.id, 'name', e.target.value)
                   }
-                  className="min-w-[160px] flex-1 rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-none"
+                  className="w-full min-w-0 sm:flex-1 rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-none"
                 />
                 <input
                   type="number"
@@ -741,7 +741,7 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
                   onChange={(e) =>
                     handleUpdateExpense(item.id, 'amount', e.target.value)
                   }
-                  className="w-40 rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-right text-base font-black text-rose-700 focus:border-emerald-600 focus:outline-none"
+                  className="min-w-0 flex-1 sm:w-40 sm:flex-initial rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-right text-base font-black text-rose-700 focus:border-emerald-600 focus:outline-none"
                 />
                 <button
                   type="button"
