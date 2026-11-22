@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'app-logo.png'],
       manifest: {
         name: 'Sổ Cân Lúa - Ghi Sổ & Tính Tiền',
         short_name: 'Cân Lúa',
@@ -22,9 +22,9 @@ export default defineConfig({
         start_url: './',
         icons: [
           {
-            src: '/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: './app-logo.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any maskable',
           },
         ],

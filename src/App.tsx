@@ -4,7 +4,6 @@ import {
   BookOpen,
   BarChart3,
   Settings,
-  Wheat,
   RefreshCw,
 } from 'lucide-react';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -286,18 +285,18 @@ export function App() {
     <div className="min-h-screen bg-slate-50 pb-28 md:pb-8">
       {/* Top App Bar */}
       <header className="no-print sticky top-0 z-30 border-b border-emerald-800/20 bg-emerald-700 text-white shadow-sm pt-safe">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-emerald-950 shadow-xs">
-              <Wheat className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-lg font-black leading-tight tracking-tight">
-                Sổ Cân Lúa <span className="text-xs font-bold text-emerald-200">v1.2.0</span>
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-3 py-2 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <img
+              src="./app-logo.png"
+              alt="Sổ Cân Lúa"
+              className="h-9 w-9 shrink-0 rounded-xl border border-emerald-500/40 object-cover shadow-xs"
+            />
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-black leading-tight tracking-tight sm:text-lg">
+                Sổ Cân Lúa{' '}
+                <span className="text-[11px] font-bold text-emerald-200">v1.2.0</span>
               </h1>
-              <p className="text-xs font-semibold text-emerald-100">
-                Ghi mã • Trừ bao • Tính tiền
-              </p>
             </div>
           </div>
 
@@ -321,13 +320,13 @@ export function App() {
           </nav>
 
           {/* Quick live pill + update button on mobile */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
             {tab === 'weigh' && (
-              <div className="text-right">
-                <div className="text-xs font-bold text-emerald-100">
+              <div className="text-right leading-tight">
+                <div className="whitespace-nowrap text-[11px] font-bold text-emerald-100">
                   {activeSummary.bagCount} bao • {formatWeight(activeSummary.netWeight)} kg
                 </div>
-                <div className="text-base font-black text-amber-300 tabular-nums">
+                <div className="whitespace-nowrap text-sm font-black text-amber-300 tabular-nums">
                   {formatCurrency(activeSummary.totalAmount)}
                 </div>
               </div>
@@ -345,10 +344,10 @@ export function App() {
                 }
                 window.location.reload();
               }}
-              className="rounded-xl bg-emerald-600 p-2.5 text-white active:scale-95"
+              className="rounded-xl bg-emerald-600 p-2 text-white active:scale-95"
               title="Cập nhật bản mới"
             >
-              <RefreshCw className="h-5 w-5" />
+              <RefreshCw className="h-4 w-4" />
             </button>
           </div>
         </div>
