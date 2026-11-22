@@ -31,6 +31,7 @@ interface MasterDataViewProps {
   onSignInGoogle: () => void;
   onSignOut: () => void;
   onSyncNow: () => void;
+  onOpenGuide: () => void;
   onUpdatePlots: (plots: Plot[]) => void;
   onUpdateWeighers: (weighers: string[]) => void;
   onUpdateSettings: (settings: AppSettings) => void;
@@ -53,6 +54,7 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
   onSignInGoogle,
   onSignOut,
   onSyncNow,
+  onOpenGuide,
   onUpdatePlots,
   onUpdateWeighers,
   onUpdateSettings,
@@ -543,7 +545,7 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
           <div className="text-sm font-medium text-slate-600">
             Hỗ trợ cân lúa ghi sổ 5×5, trừ bao quy ký, tính tiền, chi phí & lợi nhuận, quản lý khuông đất, người cân và báo cáo số liệu offline trên WebApp & Android APK.
           </div>
-          <div className="pt-2">
+          <div className="flex flex-wrap gap-2 pt-2">
             <button
               type="button"
               disabled={isUpdating}
@@ -553,10 +555,17 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
               <RefreshCw className={`h-5 w-5 ${isUpdating ? 'animate-spin' : ''}`} />
               {isUpdating ? 'Đang cập nhật...' : 'Cập nhật phiên bản mới'}
             </button>
+            <button
+              type="button"
+              onClick={onOpenGuide}
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-emerald-600 bg-white px-5 py-3 text-base font-extrabold text-emerald-900 hover:bg-emerald-50 active:scale-95"
+            >
+              Hướng dẫn thiết lập ban đầu
+            </button>
+          </div>
             {updateMsg && (
               <p className="mt-2 text-sm font-bold text-emerald-800">{updateMsg}</p>
             )}
-          </div>
         </div>
       </div>
     </div>

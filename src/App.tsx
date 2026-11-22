@@ -24,11 +24,13 @@ import {
   getTodayISO,
 } from './utils/calculations';
 import {
+  isOnboardingDone,
   loadDraft,
   loadPlots,
   loadRecords,
   loadSettings,
   loadWeighers,
+  markOnboardingDone,
   saveDraft,
   savePlots,
   saveRecords,
@@ -38,6 +40,7 @@ import {
 import { WeighingForm } from './components/WeighingForm';
 import { RecordsList } from './components/RecordsList';
 import { ReportsView } from './components/ReportsView';
+import { OnboardingWizard } from './components/OnboardingWizard';
 
 type TabKey = 'weigh' | 'records' | 'reports' | 'settings';
 
@@ -82,6 +85,9 @@ export function App() {
   });
 
   const [savedBanner, setSavedBanner] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(
+    () => !isOnboardingDone() && loadRecords().length === 0
+  );
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [authError, setAuthError] = useState('');
@@ -406,6 +412,7 @@ export function App() {
             onSignInGoogle={handleSignInGoogle}
             onSignOut={handleSignOut}
             onSyncNow={handleSyncNow}
+            onOpenGuide={() => setShowOnboarding(true)}
             onUpdatePlots={setPlots}
             onUpdateWeighers={setWeighers}
             onUpdateSettings={setSettings}
@@ -441,6 +448,41 @@ export function App() {
           })}
         </div>
       </nav>
+
+      {showOnboarding && (
+        <OnboardingWizard
+          settings={settings}
+          user={user}
+          onSignInGoogle={handleSignInGoogle}
+          onUpdateSettings={(next) => {
+            setSettings(next);
+            if (!isEditingExisting) {
+              setActiveRecord((prev) => ({
+                ...prev,
+                weigherName: prev.weigherName || next.defaultWeigherName,
+                pricePerKg: next.defaultPricePerKg,
+                tareConfig: { ...next.defaultTareConfig },
+              }));
+            }
+          }}
+          onAddFirstPlot={(newPlot) => {
+            setPlots((prev) => [newPlot, ...prev]);
+            if (!isEditingExisting && !activeRecord.plotName) {
+              setActiveRecord((prev) => ({
+                ...prev,
+                plotId: newPlot.id,
+                plotName: newPlot.name,
+                areaCong: newPlot.areaCong,
+                riceVariety: newPlot.riceVariety || '',
+              }));
+            }
+          }}
+          onComplete={() => {
+            markOnboardingDone();
+            setShowOnboarding(false);
+          }}
+        />
+      )}
     </div>
   );
 }
