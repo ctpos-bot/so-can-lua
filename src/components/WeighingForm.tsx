@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type {
   ExpenseItem,
+  PaymentItem,
   Plot,
   TareMode,
   WeighingRecord,
@@ -24,6 +25,7 @@ import {
   calcRecordSummary,
   formatCurrency,
   formatWeight,
+  getTodayISO,
 } from '../utils/calculations';
 import { shareOrDownloadReceipt } from '../utils/shareReceipt';
 import { WeighingGrid } from './WeighingGrid';
@@ -135,6 +137,40 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
     onChange({
       ...record,
       expenses: expenses.filter((item) => item.id !== id),
+    });
+  };
+
+  const payments = record.payments || [];
+
+  const handleAddPayment = () => {
+    const newPayment: PaymentItem = {
+      id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      date: getTodayISO(),
+      amount: Math.max(0, summary.remainingAmount),
+      note: '',
+    };
+    onChange({ ...record, payments: [...payments, newPayment] });
+  };
+
+  const handleUpdatePayment = (
+    id: string,
+    field: 'date' | 'amount' | 'note',
+    value: string
+  ) => {
+    const updated = payments.map((p) => {
+      if (p.id !== id) return p;
+      if (field === 'amount') {
+        return { ...p, amount: Math.max(0, Number(value) || 0) };
+      }
+      return { ...p, [field]: value };
+    });
+    onChange({ ...record, payments: updated });
+  };
+
+  const handleRemovePayment = (id: string) => {
+    onChange({
+      ...record,
+      payments: payments.filter((p) => p.id !== id),
     });
   };
 
@@ -619,12 +655,91 @@ export const WeighingForm: React.FC<WeighingFormProps> = ({
             </div>
             <div
               className={`mt-1 text-2xl sm:text-3xl font-black tabular-nums ${
-                summary.remainingAmount >= 0 ? 'text-emerald-800' : 'text-rose-700'
+                summary.remainingAmount > 0
+                  ? 'text-rose-700'
+                  : 'text-emerald-800'
               }`}
             >
               {formatCurrency(summary.remainingAmount)}
             </div>
+            {payments.length > 0 && (
+              <div className="mt-1 text-xs font-bold text-slate-500">
+                Tổng đã trả: {formatCurrency(summary.totalPaid)}
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Thanh toán nhiều đợt */}
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3.5">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-extrabold text-slate-800">
+              Lịch sử thanh toán nhiều đợt ({payments.length} đợt)
+            </span>
+            <button
+              type="button"
+              onClick={handleAddPayment}
+              className="no-print inline-flex items-center gap-1 rounded-xl bg-emerald-700 px-3 py-2 text-xs font-extrabold text-white hover:bg-emerald-800 active:scale-95"
+            >
+              <Plus className="h-4 w-4" />
+              Thêm đợt trả
+            </button>
+          </div>
+          {payments.length === 0 ? (
+            <p className="text-xs font-medium text-slate-500">
+              Bấm &quot;+ Thêm đợt trả&quot; nếu thương lái thanh toán làm nhiều lần sau khi cân.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {payments.map((p, idx) => (
+                <div
+                  key={p.id}
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2"
+                >
+                  <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-extrabold text-emerald-900">
+                    Đợt {idx + 1}
+                  </span>
+                  <input
+                    type="date"
+                    value={p.date}
+                    onChange={(e) =>
+                      handleUpdatePayment(p.id, 'date', e.target.value)
+                    }
+                    className="w-36 min-w-0 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-bold"
+                  />
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    step="10000"
+                    min="0"
+                    placeholder="Số tiền"
+                    value={p.amount || ''}
+                    onChange={(e) =>
+                      handleUpdatePayment(p.id, 'amount', e.target.value)
+                    }
+                    className="w-32 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-right text-sm font-black text-emerald-900"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ghi chú (CK/Tiền mặt)..."
+                    value={p.note}
+                    onChange={(e) =>
+                      handleUpdatePayment(p.id, 'note', e.target.value)
+                    }
+                    className="min-w-[140px] flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePayment(p.id)}
+                    className="no-print rounded-lg p-1.5 text-rose-600 hover:bg-rose-100"
+                    title="Xóa đợt trả"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-3">

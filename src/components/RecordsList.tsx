@@ -32,6 +32,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
   const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterPlot, setFilterPlot] = useState('');
+  const [onlyDebt, setOnlyDebt] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   const uniquePlots = useMemo(() => {
@@ -49,6 +50,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
       .filter((rec) => {
         if (filterDate && rec.date !== filterDate) return false;
         if (filterPlot && rec.plotName !== filterPlot) return false;
+        if (onlyDebt && calcRecordSummary(rec).remainingAmount <= 0) return false;
         if (!q) return true;
         return (
           rec.code.toLowerCase().includes(q) ||
@@ -58,9 +60,16 @@ export const RecordsList: React.FC<RecordsListProps> = ({
           rec.riceVariety.toLowerCase().includes(q)
         );
       });
-  }, [records, search, filterDate, filterPlot]);
+  }, [records, search, filterDate, filterPlot, onlyDebt]);
 
-  const hasActiveFilter = Boolean(search || filterDate || filterPlot);
+  const totalDebt = useMemo(() => {
+    return filtered.reduce((sum, rec) => {
+      const rem = calcRecordSummary(rec).remainingAmount;
+      return rem > 0 ? sum + rem : sum;
+    }, 0);
+  }, [filtered]);
+
+  const hasActiveFilter = Boolean(search || filterDate || filterPlot || onlyDebt);
 
   return (
     <div className="space-y-3 pb-6">
@@ -70,7 +79,7 @@ export const RecordsList: React.FC<RecordsListProps> = ({
           <h2 className="text-lg font-black text-slate-900">
             Sổ cân ({filtered.length} phiếu)
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {hasActiveFilter && (
               <button
                 type="button"
@@ -78,12 +87,24 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                   setSearch('');
                   setFilterDate('');
                   setFilterPlot('');
+                  setOnlyDebt(false);
                 }}
-                className="text-sm font-bold text-rose-600 hover:underline"
+                className="text-xs font-bold text-rose-600 hover:underline"
               >
                 Xóa lọc
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setOnlyDebt((v) => !v)}
+              className={`rounded-xl px-3 py-1.5 text-sm font-extrabold transition ${
+                onlyDebt
+                  ? 'bg-rose-600 text-white'
+                  : 'border border-rose-300 bg-rose-50 text-rose-800'
+              }`}
+            >
+              Còn nợ
+            </button>
             <button
               type="button"
               onClick={() => setShowFilters((v) => !v)}
@@ -98,6 +119,15 @@ export const RecordsList: React.FC<RecordsListProps> = ({
             </button>
           </div>
         </div>
+
+        {totalDebt > 0 && (
+          <div className="mb-2 flex items-center justify-between rounded-xl bg-amber-50 px-3 py-2 text-sm font-bold text-amber-950 ring-1 ring-amber-300">
+            <span>Tổng còn nợ ({filtered.filter((r) => calcRecordSummary(r).remainingAmount > 0).length} phiếu):</span>
+            <span className="font-black text-rose-700">
+              {formatCurrency(totalDebt)}
+            </span>
+          </div>
+        )}
 
         <div className="relative min-w-0">
           <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-slate-400" />
@@ -165,6 +195,15 @@ export const RecordsList: React.FC<RecordsListProps> = ({
                     {rec.riceVariety && (
                       <span className="rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-extrabold text-amber-900">
                         {rec.riceVariety}
+                      </span>
+                    )}
+                    {s.remainingAmount > 0 ? (
+                      <span className="rounded-lg bg-rose-100 px-2 py-0.5 text-xs font-extrabold text-rose-800">
+                        Còn nợ: {formatCurrency(s.remainingAmount)}
+                      </span>
+                    ) : (
+                      <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-extrabold text-emerald-700">
+                        Đã đủ
                       </span>
                     )}
                   </div>

@@ -104,7 +104,11 @@ export function calcRecordSummary(record: WeighingRecord): RecordSummary {
   const tareWeight = calcTareWeight(bagCount, record.tareConfig);
   const netWeight = Math.max(0, Math.round((grossWeight - tareWeight) * 100) / 100);
   const totalAmount = Math.round(netWeight * (record.pricePerKg || 0));
-  const remainingAmount = totalAmount - (record.deposit || 0);
+  const extraPayments = Math.round(
+    (record.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0)
+  );
+  const totalPaid = Math.round((record.deposit || 0) + extraPayments);
+  const remainingAmount = totalAmount - totalPaid;
 
   const totalExpenses = Math.round(
     (record.expenses || []).reduce((sum, item) => sum + (item.amount || 0), 0)
@@ -123,6 +127,7 @@ export function calcRecordSummary(record: WeighingRecord): RecordSummary {
     tareWeight,
     netWeight,
     totalAmount,
+    totalPaid,
     remainingAmount,
     totalExpenses,
     profit,
@@ -210,7 +215,7 @@ export function exportRecordsToCSV(records: WeighingRecord[]): void {
       s.bagsPerCong ?? '',
       s.kgPerCong ?? '',
       s.amountPerCong ?? '',
-      rec.deposit,
+      s.totalPaid,
       s.remainingAmount,
       rec.notes || '',
     ]

@@ -8,6 +8,8 @@ import {
   Volume2,
   VolumeX,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import type { WeighingTable } from '../types/weighing';
 import {
@@ -46,6 +48,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
   const [activeCell, setActiveCell] = useState<ActiveCell | null>(null);
   const [editingText, setEditingText] = useState<string>('');
   const [useCustomNumpad, setUseCustomNumpad] = useState<boolean>(false);
+  const [numpadMinimized, setNumpadMinimized] = useState<boolean>(false);
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const abnormalCount = useMemo(() => {
@@ -86,6 +89,7 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
 
   const focusCell = (tIdx: number, col: number, row: number) => {
     setActiveCell({ tableIndex: tIdx, col, row });
+    setNumpadMinimized(false);
     const currentVal = tables[tIdx]?.cells[col]?.[row];
     setEditingText(
       currentVal !== null && currentVal !== undefined
@@ -446,92 +450,116 @@ export const WeighingGrid: React.FC<WeighingGridProps> = ({
         Thêm bảng cân mới (25 bao tiếp theo)
       </button>
 
-      {/* Bàn phím số nhanh tích hợp cho thao tác 1 tay ngoài đồng */}
+      {/* Bàn phím số nhanh nổi gọn phía dưới bảng 5x5 */}
       {useCustomNumpad && activeCell && (
-        <div className="sticky bottom-18 z-30 rounded-2xl border-2 border-emerald-300 bg-white p-3.5 shadow-2xl">
-          <div className="mb-2.5 flex items-center justify-between text-sm text-slate-700">
-            <span>
-              Đang nhập:{' '}
-              <strong className="font-extrabold text-emerald-900">
-                Bảng {activeCell.tableIndex + 1} • Cột {activeCell.col + 1} • Dòng{' '}
-                {activeCell.row + 1}
-              </strong>
-            </span>
-            <span className="rounded-lg bg-amber-100 px-2.5 py-1 font-mono text-base font-black text-amber-950">
-              {editingText || '0'} kg
-            </span>
-          </div>
-          <div className="grid grid-cols-4 gap-2.5">
-            {['7', '8', '9'].map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => handleNumpadPress(k)}
-                className="h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
-              >
-                {k}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => handleNumpadPress('BACK')}
-              className="flex h-14 items-center justify-center rounded-xl bg-rose-100 text-rose-800 active:bg-rose-200"
-              title="Xóa 1 ký tự"
-            >
-              <Delete className="h-6 w-6" />
-            </button>
+        <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-xl px-2 md:bottom-3">
+          <div className="rounded-t-2xl md:rounded-2xl border-2 border-emerald-500 bg-white p-2.5 shadow-2xl">
+            <div className="mb-2 flex items-center justify-between gap-2 text-xs text-slate-700">
+              <span className="truncate">
+                Ô:{' '}
+                <strong className="font-extrabold text-emerald-900">
+                  B{activeCell.tableIndex + 1} • C{activeCell.col + 1} • D
+                  {activeCell.row + 1}
+                </strong>
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="rounded-lg bg-amber-100 px-2 py-0.5 font-mono text-sm font-black text-amber-950">
+                  {editingText || '0'} kg
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNumpadMinimized((v) => !v)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800"
+                >
+                  {numpadMinimized ? (
+                    <>
+                      <ChevronUp className="h-3.5 w-3.5" />
+                      Mở
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                      Thu gọn
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
 
-            {['4', '5', '6'].map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => handleNumpadPress(k)}
-                className="h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
-              >
-                {k}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => handleNumpadPress('CLEAR')}
-              className="h-14 rounded-xl bg-amber-100 text-sm font-extrabold text-amber-900 active:bg-amber-200"
-            >
-              Xóa ô
-            </button>
+            {!numpadMinimized && (
+              <div className="grid grid-cols-4 gap-1.5">
+                {['7', '8', '9'].map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => handleNumpadPress(k)}
+                    className="h-11 rounded-xl bg-slate-100 text-lg font-black text-slate-900 active:bg-slate-300"
+                  >
+                    {k}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleNumpadPress('BACK')}
+                  className="flex h-11 items-center justify-center rounded-xl bg-rose-100 text-rose-800 active:bg-rose-200"
+                  title="Xóa 1 ký tự"
+                >
+                  <Delete className="h-5 w-5" />
+                </button>
 
-            {['1', '2', '3'].map((k) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => handleNumpadPress(k)}
-                className="h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
-              >
-                {k}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => handleNumpadPress('NEXT')}
-              className="row-span-2 flex flex-col items-center justify-center gap-1 rounded-xl bg-emerald-700 text-base font-extrabold text-white shadow-sm active:bg-emerald-800"
-            >
-              <CornerDownLeft className="h-6 w-6" />
-              Tiếp
-            </button>
+                {['4', '5', '6'].map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => handleNumpadPress(k)}
+                    className="h-11 rounded-xl bg-slate-100 text-lg font-black text-slate-900 active:bg-slate-300"
+                  >
+                    {k}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleNumpadPress('CLEAR')}
+                  className="h-11 rounded-xl bg-amber-100 text-xs font-extrabold text-amber-900 active:bg-amber-200"
+                >
+                  Xóa ô
+                </button>
 
-            <button
-              type="button"
-              onClick={() => handleNumpadPress('0')}
-              className="col-span-2 h-14 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
-            >
-              0
-            </button>
-            <button
-              type="button"
-              onClick={() => handleNumpadPress(',')}
-              className="h-14 rounded-xl bg-slate-100 text-2xl font-black text-slate-900 active:bg-slate-300"
-            >
-              ,
-            </button>
+                {['1', '2', '3'].map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => handleNumpadPress(k)}
+                    className="h-11 rounded-xl bg-slate-100 text-lg font-black text-slate-900 active:bg-slate-300"
+                  >
+                    {k}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleNumpadPress('NEXT')}
+                  className="row-span-2 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-emerald-700 text-sm font-extrabold text-white shadow-sm active:bg-emerald-800"
+                >
+                  <CornerDownLeft className="h-5 w-5" />
+                  Tiếp
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleNumpadPress('0')}
+                  className="col-span-2 h-11 rounded-xl bg-slate-100 text-lg font-black text-slate-900 active:bg-slate-300"
+                >
+                  0
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNumpadPress(',')}
+                  className="h-11 rounded-xl bg-slate-100 text-xl font-black text-slate-900 active:bg-slate-300"
+                >
+                  ,
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

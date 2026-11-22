@@ -26,6 +26,13 @@ export interface ExpenseItem {
   amount: number;
 }
 
+export interface PaymentItem {
+  id: string;
+  date: string;
+  amount: number;
+  note: string;
+}
+
 export interface WeighingRecord {
   id: string;
   code: string;
@@ -44,6 +51,8 @@ export interface WeighingRecord {
   tareConfig: TareConfig;
   tables: WeighingTable[];
   deposit: number;
+  /** Lịch sử thanh toán nhiều đợt */
+  payments?: PaymentItem[];
   /** Danh sách chi phí (giống, phân, thuốc, công cắt, vận chuyển...) */
   expenses?: ExpenseItem[];
   notes: string;
@@ -76,6 +85,7 @@ export interface RecordSummary {
   tareWeight: number;
   netWeight: number;
   totalAmount: number;
+  totalPaid: number;
   remainingAmount: number;
   totalExpenses: number;
   profit: number;

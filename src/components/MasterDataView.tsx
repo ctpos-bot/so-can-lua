@@ -540,7 +540,7 @@ export const MasterDataView: React.FC<MasterDataViewProps> = ({
             Tên ứng dụng: <strong className="font-black text-emerald-900">Sổ Cân Lúa</strong>
           </div>
           <div>
-            Phiên bản: <span className="rounded-lg bg-emerald-700 px-2.5 py-0.5 text-sm font-black text-white">v1.2.0</span>
+            Phiên bản: <span className="rounded-lg bg-emerald-700 px-2.5 py-0.5 text-sm font-black text-white">v1.3.0</span>
           </div>
           <div className="text-sm font-medium text-slate-600">
             Hỗ trợ cân lúa ghi sổ 5×5, trừ bao quy ký, tính tiền, chi phí & lợi nhuận, quản lý khuông đất, người cân và báo cáo số liệu offline trên WebApp & Android APK.

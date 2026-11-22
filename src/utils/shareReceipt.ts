@@ -209,12 +209,12 @@ export async function generateReceiptImageBlob(
     y + 190
   );
 
-  if (record.deposit > 0) {
+  if (summary.totalPaid > 0) {
     ctx.textAlign = 'right';
     ctx.fillStyle = '#065f46';
     ctx.font = 'bold 20px sans-serif';
     ctx.fillText(
-      `Đã cọc: ${formatCurrency(record.deposit)} | Còn lại: ${formatCurrency(summary.remainingAmount)}`,
+      `Đã trả: ${formatCurrency(summary.totalPaid)} | Còn lại: ${formatCurrency(summary.remainingAmount)}`,
       width - padding - 20,
       y + 190
     );

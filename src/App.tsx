@@ -301,7 +301,7 @@ export function App() {
             <div className="min-w-0">
               <h1 className="truncate text-base font-black leading-tight tracking-tight sm:text-lg">
                 Sổ Cân Lúa{' '}
-                <span className="text-[11px] font-bold text-emerald-200">v1.2.0</span>
+                <span className="text-[11px] font-bold text-emerald-200">v1.3.0</span>
               </h1>
             </div>
           </div>
