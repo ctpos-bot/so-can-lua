@@ -1,488 +1,357 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  Scale,
-  BookOpen,
-  BarChart3,
-  Settings,
-  RefreshCw,
-} from 'lucide-react';
-import type { User as FirebaseUser } from 'firebase/auth';
-import type { AppSettings, Plot, WeighingRecord } from './types/weighing';
-import {
-  signInWithGoogle,
-  signOutGoogle,
-  subscribeAuth,
-} from './services/firebase';
-import { pushToCloud, syncWithCloud } from './services/cloudSync';
-import { MasterDataView, type SyncStatus } from './components/MasterDataView';
-import {
-  calcRecordSummary,
-  createEmptyTable,
-  formatCurrency,
-  formatWeight,
-  generateRecordCode,
-  getTodayISO,
-} from './utils/calculations';
-import {
-  isOnboardingDone,
-  loadDraft,
-  loadPlots,
-  loadRecords,
-  loadSettings,
-  loadWeighers,
-  markOnboardingDone,
-  saveDraft,
-  savePlots,
-  saveRecords,
-  saveSettings,
-  saveWeighers,
-} from './utils/storage';
-import { WeighingForm } from './components/WeighingForm';
-import { RecordsList } from './components/RecordsList';
-import { ReportsView } from './components/ReportsView';
-import { OnboardingWizard } from './components/OnboardingWizard';
+import type { CaiDat, CoChuApp, LanCan, PhieuCan, TabChinh } from './types';
+import { db, layHoacTaoCaiDat } from './db/database';
+import { khoiTaoDuLieuMauNeuTrong } from './db/seedSample';
+import { Header } from './components/layout/Header';
+import { BottomNav } from './components/layout/BottomNav';
+import { FirstRunGuide } from './components/onboarding/FirstRunGuide';
+import { HomeScreen } from './components/home/HomeScreen';
+import { CreateTicketScreen } from './components/create/CreateTicketScreen';
+import { WeighScreen } from './components/weigh/WeighScreen';
+import { SummaryScreen } from './components/summary/SummaryScreen';
+import { ShareTicketScreen } from './components/share/ShareTicketScreen';
+import { LedgerScreen } from './components/ledger/LedgerScreen';
+import { SettingsScreen } from './components/settings/SettingsScreen';
+import { UndoToast } from './components/ui/UndoToast';
 
-type TabKey = 'weigh' | 'records' | 'reports' | 'settings';
+type ManHinhCanLua = 'home' | 'create' | 'weigh' | 'summary' | 'share';
 
-function createNewRecord(
-  settings: AppSettings,
-  existingRecords: WeighingRecord[]
-): WeighingRecord {
-  const today = getTodayISO();
-  const sameDayCount = existingRecords.filter((r) => r.date === today).length;
-  const now = Date.now();
-  return {
-    id: `rec-${now}`,
-    code: generateRecordCode(today, sameDayCount),
-    date: today,
-    plotName: '',
-    riceVariety: '',
-    weigherName: settings.defaultWeigherName || '',
-    farmerName: '',
-    pricePerKg: settings.defaultPricePerKg || 7500,
-    tareConfig: { ...settings.defaultTareConfig },
-    tables: [createEmptyTable(1)],
-    deposit: 0,
-    notes: '',
-    createdAt: now,
-    updatedAt: now,
-  };
-}
+type UndoPayload =
+  | { loai: 'lan'; lan: LanCan; message: string }
+  | { loai: 'phieu'; phieu: PhieuCan; cacLan: LanCan[]; message: string };
 
 export function App() {
-  const [tab, setTab] = useState<TabKey>('weigh');
-  const [records, setRecords] = useState<WeighingRecord[]>(() => loadRecords());
-  const [plots, setPlots] = useState<Plot[]>(() => loadPlots());
-  const [weighers, setWeighers] = useState<string[]>(() => loadWeighers());
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
+  const [tab, setTab] = useState<TabChinh>('can_lua');
+  const [manHinh, setManHinh] = useState<ManHinhCanLua>('home');
+  const [phieuDangMoId, setPhieuDangMoId] = useState<string | null>(null);
 
-  const [activeRecord, setActiveRecord] = useState<WeighingRecord>(() => {
-    const draft = loadDraft();
-    if (draft) return draft;
-    const initialRecords = loadRecords();
-    if (initialRecords.length > 0) return initialRecords[0];
-    return createNewRecord(loadSettings(), initialRecords);
+  const [danhSachPhieu, setDanhSachPhieu] = useState<PhieuCan[]>([]);
+  const [tatCaLanCan, setTatCaLanCan] = useState<LanCan[]>([]);
+  const [caiDat, setCaiDat] = useState<CaiDat>({
+    id: 'default',
+    coChu: 'lon',
+    daXemHuongDan: true,
   });
+  const [dangTai, setDangTai] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [undoItem, setUndoItem] = useState<UndoPayload | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
 
-  const [savedBanner, setSavedBanner] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(
-    () => !isOnboardingDone() && loadRecords().length === 0
-  );
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
-  const [authError, setAuthError] = useState('');
-  const skipNextCloudPush = useRef(false);
-
-  useEffect(() => {
-    saveRecords(records);
-  }, [records]);
-
-  useEffect(() => {
-    savePlots(plots);
-  }, [plots]);
-
-  useEffect(() => {
-    saveWeighers(weighers);
-  }, [weighers]);
+  const taiDuLieu = async () => {
+    await khoiTaoDuLieuMauNeuTrong();
+    const [phieu, lan, cd] = await Promise.all([
+      db.phieuCan.toArray(),
+      db.lanCan.toArray(),
+      layHoacTaoCaiDat(),
+    ]);
+    setDanhSachPhieu(phieu);
+    setTatCaLanCan(lan);
+    setCaiDat(cd);
+    setDangTai(false);
+  };
 
   useEffect(() => {
-    saveSettings(settings);
-  }, [settings]);
-
-  useEffect(() => {
-    saveDraft(activeRecord);
-  }, [activeRecord]);
-
-  useEffect(() => {
-    const unsub = subscribeAuth(async (u) => {
-      setUser(u);
-      if (u) {
-        setSyncStatus('syncing');
-        try {
-          const merged = await syncWithCloud(u.uid, {
-            records: loadRecords(),
-            plots: loadPlots(),
-            weighers: loadWeighers(),
-            settings: loadSettings(),
-          });
-          skipNextCloudPush.current = true;
-          setRecords(merged.records);
-          setPlots(merged.plots);
-          setWeighers(merged.weighers);
-          setSettings(merged.settings);
-          setAuthError('');
-          setSyncStatus('synced');
-        } catch (err) {
-          setSyncStatus('error');
-          setAuthError(
-            err instanceof Error ? err.message : 'Lỗi đồng bộ dữ liệu.'
-          );
-        }
-      } else {
-        setSyncStatus('idle');
-      }
-    });
-    return unsub;
+    void taiDuLieu();
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    if (skipNextCloudPush.current) {
-      skipNextCloudPush.current = false;
-      return;
+    const root = document.documentElement;
+    if (caiDat.coChu === 'rat_lon') {
+      root.classList.add('co-chu-rat-lon');
+    } else {
+      root.classList.remove('co-chu-rat-lon');
     }
-    const timer = setTimeout(async () => {
-      setSyncStatus('syncing');
-      try {
-        await pushToCloud(user.uid, { records, plots, weighers, settings });
-        setSyncStatus('synced');
-      } catch {
-        setSyncStatus('error');
-      }
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [user, records, plots, weighers, settings]);
+  }, [caiDat.coChu]);
 
-  const handleSignInGoogle = async () => {
-    setAuthError('');
-    try {
-      await signInWithGoogle();
-    } catch (err) {
-      setAuthError(
-        err instanceof Error ? err.message : 'Không thể đăng nhập Google.'
-      );
-    }
+  const danhDauDaLuu = () => {
+    setSaveStatus('saved');
+    window.setTimeout(() => setSaveStatus('idle'), 1500);
   };
 
-  const handleSignOut = async () => {
-    setAuthError('');
-    await signOutGoogle();
+  const datUndoToast = (payload: UndoPayload) => {
+    if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+    setUndoItem(payload);
+    undoTimerRef.current = window.setTimeout(() => {
+      setUndoItem(null);
+    }, 5000);
   };
 
-  const handleSyncNow = async () => {
-    if (!user) return;
-    setSyncStatus('syncing');
-    try {
-      const merged = await syncWithCloud(user.uid, {
-        records,
-        plots,
-        weighers,
-        settings,
-      });
-      skipNextCloudPush.current = true;
-      setRecords(merged.records);
-      setPlots(merged.plots);
-      setWeighers(merged.weighers);
-      setSettings(merged.settings);
-      setAuthError('');
-      setSyncStatus('synced');
-    } catch (err) {
-      setSyncStatus('error');
-      setAuthError(err instanceof Error ? err.message : 'Lỗi đồng bộ dữ liệu.');
-    }
+  const hoanTatHuongDan = async () => {
+    const capNhat: CaiDat = { ...caiDat, daXemHuongDan: true };
+    await db.caiDat.put(capNhat);
+    setCaiDat(capNhat);
   };
 
-  const isEditingExisting = records.some((r) => r.id === activeRecord.id);
-  const activeSummary = calcRecordSummary(activeRecord);
-
-  const handleSaveActive = () => {
+  const handleTaoPhieu = async (
+    duLieu: Omit<PhieuCan, 'id' | 'ngayTao' | 'ngayCapNhat'>
+  ) => {
+    setSaveStatus('saving');
     const now = Date.now();
-    const updatedRec: WeighingRecord = {
-      ...activeRecord,
-      updatedAt: now,
+    const phieuMoi: PhieuCan = {
+      ...duLieu,
+      id: `phieu-${now}`,
+      ngayTao: now,
+      ngayCapNhat: now,
     };
+    await db.phieuCan.put(phieuMoi);
+    setDanhSachPhieu((prev) => [phieuMoi, ...prev]);
+    setPhieuDangMoId(phieuMoi.id);
+    setManHinh('weigh');
+    danhDauDaLuu();
+  };
 
-    setRecords((prev) => {
-      const exists = prev.some((r) => r.id === updatedRec.id);
-      if (exists) {
-        return prev.map((r) => (r.id === updatedRec.id ? updatedRec : r));
-      }
-      return [updatedRec, ...prev];
+  const handleCapNhatPhieu = async (capNhat: Partial<PhieuCan>) => {
+    if (!phieuDangMoId) return;
+    setSaveStatus('saving');
+    const now = Date.now();
+    await db.phieuCan.update(phieuDangMoId, { ...capNhat, ngayCapNhat: now });
+    setDanhSachPhieu((prev) =>
+      prev.map((p) =>
+        p.id === phieuDangMoId ? { ...p, ...capNhat, ngayCapNhat: now } : p
+      )
+    );
+    danhDauDaLuu();
+  };
+
+  const handleThemLanCan = async (soKy: number): Promise<string> => {
+    if (!phieuDangMoId) return '';
+    setSaveStatus('saving');
+    const lanCuaPhieu = tatCaLanCan.filter((l) => l.phieuId === phieuDangMoId);
+    const maxThuTu = lanCuaPhieu.reduce((m, l) => Math.max(m, l.thuTu), 0);
+    const now = Date.now();
+    const lanMoi: LanCan = {
+      id: `lan-${now}-${Math.random().toString(36).slice(2, 6)}`,
+      phieuId: phieuDangMoId,
+      thuTu: maxThuTu + 1,
+      soKy,
+      ngayTao: now,
+    };
+    await db.lanCan.put(lanMoi);
+    await db.phieuCan.update(phieuDangMoId, { ngayCapNhat: now });
+    setTatCaLanCan((prev) => [...prev, lanMoi]);
+    setDanhSachPhieu((prev) =>
+      prev.map((p) => (p.id === phieuDangMoId ? { ...p, ngayCapNhat: now } : p))
+    );
+    danhDauDaLuu();
+    return lanMoi.id;
+  };
+
+  const handleSuaLanCan = async (lanId: string, soKy: number) => {
+    if (!phieuDangMoId) return;
+    setSaveStatus('saving');
+    const now = Date.now();
+    await db.lanCan.update(lanId, { soKy });
+    await db.phieuCan.update(phieuDangMoId, { ngayCapNhat: now });
+    setTatCaLanCan((prev) =>
+      prev.map((l) => (l.id === lanId ? { ...l, soKy } : l))
+    );
+    danhDauDaLuu();
+  };
+
+  const handleXoaLanCan = async (lan: LanCan) => {
+    setSaveStatus('saving');
+    await db.lanCan.delete(lan.id);
+    setTatCaLanCan((prev) => prev.filter((l) => l.id !== lan.id));
+    danhDauDaLuu();
+    datUndoToast({ loai: 'lan', lan, message: `Đã xóa bao #${lan.thuTu}` });
+  };
+
+  const handleXoaPhieu = async (phieu: PhieuCan) => {
+    setSaveStatus('saving');
+    const cacLan = tatCaLanCan.filter((l) => l.phieuId === phieu.id);
+    await db.transaction('rw', db.phieuCan, db.lanCan, async () => {
+      await db.phieuCan.delete(phieu.id);
+      await db.lanCan.where('phieuId').equals(phieu.id).delete();
     });
+    setDanhSachPhieu((prev) => prev.filter((p) => p.id !== phieu.id));
+    setTatCaLanCan((prev) => prev.filter((l) => l.phieuId !== phieu.id));
+    if (phieuDangMoId === phieu.id) {
+      setPhieuDangMoId(null);
+      setManHinh('home');
+    }
+    danhDauDaLuu();
+    datUndoToast({
+      loai: 'phieu',
+      phieu,
+      cacLan,
+      message: `Đã xóa phiếu ${phieu.tenKhach}`,
+    });
+  };
 
-    const trimmedWeigher = updatedRec.weigherName.trim();
-    if (trimmedWeigher && !weighers.includes(trimmedWeigher)) {
-      setWeighers((prev) => [trimmedWeigher, ...prev]);
+  const handleHoanTac = async () => {
+    if (!undoItem) return;
+    if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+
+    if (undoItem.loai === 'lan') {
+      await db.lanCan.put(undoItem.lan);
+      setTatCaLanCan((prev) => [...prev, undoItem.lan]);
+    } else {
+      await db.transaction('rw', db.phieuCan, db.lanCan, async () => {
+        await db.phieuCan.put(undoItem.phieu);
+        if (undoItem.cacLan.length > 0) {
+          await db.lanCan.bulkPut(undoItem.cacLan);
+        }
+      });
+      setDanhSachPhieu((prev) => [undoItem.phieu, ...prev]);
+      setTatCaLanCan((prev) => [...prev, ...undoItem.cacLan]);
     }
 
-    setActiveRecord(updatedRec);
-    setSavedBanner(true);
-    setTimeout(() => setSavedBanner(false), 3000);
+    setUndoItem(null);
+    danhDauDaLuu();
   };
 
-  const handleNewRecord = () => {
-    const fresh = createNewRecord(settings, records);
-    setActiveRecord(fresh);
-    setSavedBanner(false);
-    setTab('weigh');
+  const handleDoiCoChu = async (coChu: CoChuApp) => {
+    const capNhat: CaiDat = { ...caiDat, coChu };
+    await db.caiDat.put(capNhat);
+    setCaiDat(capNhat);
+    danhDauDaLuu();
   };
 
-  const handleSelectRecord = (rec: WeighingRecord) => {
-    setActiveRecord(rec);
-    setSavedBanner(false);
-    setTab('weigh');
-  };
-
-  const handleDuplicateRecord = (rec: WeighingRecord) => {
-    const today = getTodayISO();
-    const sameDayCount = records.filter((r) => r.date === today).length;
-    const now = Date.now();
-    const copy: WeighingRecord = {
-      ...JSON.parse(JSON.stringify(rec)),
-      id: `rec-${now}`,
-      code: generateRecordCode(today, sameDayCount),
-      date: today,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setActiveRecord(copy);
-    setTab('weigh');
-  };
-
-  const handleDeleteRecord = (id: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa phiếu cân này không?')) return;
-    const remaining = records.filter((r) => r.id !== id);
-    setRecords(remaining);
-    if (activeRecord.id === id) {
-      setActiveRecord(createNewRecord(settings, remaining));
-    }
-  };
-
-  const handleImportBackup = (data: {
-    records?: WeighingRecord[];
-    plots?: Plot[];
-    weighers?: string[];
-    settings?: AppSettings;
+  const handleKhoiPhuc = async (duLieu: {
+    phieuCan: PhieuCan[];
+    lanCan: LanCan[];
   }) => {
-    if (Array.isArray(data.records)) setRecords(data.records);
-    if (Array.isArray(data.plots)) setPlots(data.plots);
-    if (Array.isArray(data.weighers)) setWeighers(data.weighers);
-    if (data.settings) setSettings(data.settings);
+    await db.transaction('rw', db.phieuCan, db.lanCan, async () => {
+      await db.phieuCan.clear();
+      await db.lanCan.clear();
+      await db.phieuCan.bulkPut(duLieu.phieuCan);
+      await db.lanCan.bulkPut(duLieu.lanCan);
+    });
+    setDanhSachPhieu(duLieu.phieuCan);
+    setTatCaLanCan(duLieu.lanCan);
+    setPhieuDangMoId(null);
+    setManHinh('home');
+    danhDauDaLuu();
   };
 
-  const navItems: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'weigh', label: 'Cân Lúa', icon: <Scale className="h-7 w-7" /> },
-    { key: 'records', label: 'Sổ Cân', icon: <BookOpen className="h-7 w-7" /> },
-    { key: 'reports', label: 'Báo Cáo', icon: <BarChart3 className="h-7 w-7" /> },
-    { key: 'settings', label: 'Cài Đặt', icon: <Settings className="h-7 w-7" /> },
-  ];
+  const phieuDangMo =
+    danhSachPhieu.find((p) => p.id === phieuDangMoId) || null;
+  const lanCuaPhieuDangMo = phieuDangMo
+    ? tatCaLanCan.filter((l) => l.phieuId === phieuDangMo.id)
+    : [];
+
+  const getHeaderTitle = () => {
+    if (tab === 'so_can') return 'Sổ cân';
+    if (tab === 'cai_dat') return 'Cài đặt';
+    if (manHinh === 'create') return 'Tạo phiếu mới';
+    if (manHinh === 'weigh') return 'Cân lúa';
+    if (manHinh === 'summary') return 'Tổng kết';
+    if (manHinh === 'share') return 'Phiếu cân';
+    return 'Sổ Cân Lúa';
+  };
+
+  const handleBack = () => {
+    if (manHinh === 'share') setManHinh('summary');
+    else if (manHinh === 'summary') setManHinh('weigh');
+    else if (manHinh === 'weigh' || manHinh === 'create') setManHinh('home');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28 md:pb-8">
-      {/* Top App Bar */}
-      <header className="no-print sticky top-0 z-30 border-b border-emerald-800/20 bg-emerald-700 text-white shadow-sm pt-safe">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-3 py-2 sm:px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <img
-              src="./app-logo.png"
-              alt="Sổ Cân Lúa"
-              className="h-9 w-9 shrink-0 rounded-xl border border-emerald-500/40 object-cover shadow-xs"
-            />
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-black leading-tight tracking-tight sm:text-lg">
-                Sổ Cân Lúa{' '}
-                <span className="text-[11px] font-bold text-emerald-200">v1.2.0</span>
-              </h1>
-            </div>
-          </div>
+    <div className="min-h-screen bg-white text-[#111111]">
+      <Header
+        title={getHeaderTitle()}
+        onBack={tab === 'can_lua' && manHinh !== 'home' ? handleBack : undefined}
+        saveStatus={saveStatus}
+      />
 
-          {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-1 md:flex">
-            {navItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setTab(item.key)}
-                className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
-                  tab === item.key
-                    ? 'bg-white text-emerald-800 shadow-xs'
-                    : 'text-emerald-50 hover:bg-emerald-600'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Quick live pill + update button on mobile */}
-          <div className="flex shrink-0 items-center gap-2 md:hidden">
-            {tab === 'weigh' && (
-              <div className="text-right leading-tight">
-                <div className="whitespace-nowrap text-[11px] font-bold text-emerald-100">
-                  {activeSummary.bagCount} bao • {formatWeight(activeSummary.netWeight)} kg
-                </div>
-                <div className="whitespace-nowrap text-sm font-black text-amber-300 tabular-nums">
-                  {formatCurrency(activeSummary.totalAmount)}
-                </div>
-              </div>
+      <main className="mx-auto max-w-lg px-3 pt-4">
+        {dangTai ? (
+          <p className="py-10 text-center text-body font-bold">
+            Đang tải sổ cân...
+          </p>
+        ) : tab === 'can_lua' ? (
+          <>
+            {manHinh === 'home' && (
+              <HomeScreen
+                danhSachPhieu={danhSachPhieu}
+                tatCaLanCan={tatCaLanCan}
+                onCanMoi={() => setManHinh('create')}
+                onMoPhieu={(phieu) => {
+                  setPhieuDangMoId(phieu.id);
+                  setManHinh('weigh');
+                }}
+              />
             )}
-            <button
-              type="button"
-              onClick={async () => {
-                if ('serviceWorker' in navigator) {
-                  const regs = await navigator.serviceWorker.getRegistrations();
-                  for (const reg of regs) await reg.update();
-                }
-                if ('caches' in window) {
-                  const keys = await caches.keys();
-                  await Promise.all(keys.map((k) => caches.delete(k)));
-                }
-                window.location.reload();
-              }}
-              className="rounded-xl bg-emerald-600 p-2 text-white active:scale-95"
-              title="Cập nhật bản mới"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-5xl px-3 pt-4 sm:px-4">
-        {tab === 'weigh' && (
-          <WeighingForm
-            record={activeRecord}
-            plots={plots}
-            weighers={weighers}
-            isEditingExisting={isEditingExisting}
-            savedBanner={savedBanner}
-            quickThreeDigitDecimal={settings.quickThreeDigitDecimal}
-            voiceFeedback={settings.voiceFeedback}
-            onToggleQuickThreeDigit={() =>
-              setSettings((prev) => ({
-                ...prev,
-                quickThreeDigitDecimal: !prev.quickThreeDigitDecimal,
-              }))
-            }
-            onToggleVoiceFeedback={() =>
-              setSettings((prev) => ({
-                ...prev,
-                voiceFeedback: !prev.voiceFeedback,
-              }))
-            }
-            onChange={setActiveRecord}
-            onSave={handleSaveActive}
-            onNewRecord={handleNewRecord}
-            onPrint={() => window.print()}
+            {manHinh === 'create' && (
+              <CreateTicketScreen
+                danhSachPhieuCu={danhSachPhieu}
+                onTaoPhieu={(duLieu) => void handleTaoPhieu(duLieu)}
+              />
+            )}
+
+            {manHinh === 'weigh' && phieuDangMo && (
+              <WeighScreen
+                phieu={phieuDangMo}
+                danhSachLanCan={lanCuaPhieuDangMo}
+                onThemLanCan={handleThemLanCan}
+                onSuaLanCan={handleSuaLanCan}
+                onXoaLanCan={handleXoaLanCan}
+                onMoTongKet={() => setManHinh('summary')}
+              />
+            )}
+
+            {manHinh === 'summary' && phieuDangMo && (
+              <SummaryScreen
+                phieu={phieuDangMo}
+                danhSachLanCan={lanCuaPhieuDangMo}
+                onCapNhatPhieu={handleCapNhatPhieu}
+                onMoChiaSe={() => setManHinh('share')}
+              />
+            )}
+
+            {manHinh === 'share' && phieuDangMo && (
+              <ShareTicketScreen
+                phieu={phieuDangMo}
+                danhSachLanCan={lanCuaPhieuDangMo}
+              />
+            )}
+          </>
+        ) : tab === 'so_can' ? (
+          <LedgerScreen
+            danhSachPhieu={danhSachPhieu}
+            tatCaLanCan={tatCaLanCan}
+            onMoPhieu={(phieu) => {
+              setPhieuDangMoId(phieu.id);
+              setTab('can_lua');
+              setManHinh('weigh');
+            }}
+            onXoaPhieu={handleXoaPhieu}
           />
-        )}
-
-        {tab === 'records' && (
-          <RecordsList
-            records={records}
-            onSelectRecord={handleSelectRecord}
-            onDuplicateRecord={handleDuplicateRecord}
-            onDeleteRecord={handleDeleteRecord}
-          />
-        )}
-
-        {tab === 'reports' && <ReportsView records={records} plots={plots} />}
-
-        {tab === 'settings' && (
-          <MasterDataView
-            plots={plots}
-            weighers={weighers}
-            settings={settings}
-            records={records}
-            user={user}
-            syncStatus={syncStatus}
-            authError={authError}
-            onSignInGoogle={handleSignInGoogle}
-            onSignOut={handleSignOut}
-            onSyncNow={handleSyncNow}
-            onOpenGuide={() => setShowOnboarding(true)}
-            onUpdatePlots={setPlots}
-            onUpdateWeighers={setWeighers}
-            onUpdateSettings={setSettings}
-            onImportBackup={handleImportBackup}
+        ) : (
+          <SettingsScreen
+            caiDat={caiDat}
+            danhSachPhieu={danhSachPhieu}
+            tatCaLanCan={tatCaLanCan}
+            onDoiCoChu={handleDoiCoChu}
+            onMoHuongDan={() =>
+              setCaiDat((prev) => ({ ...prev, daXemHuongDan: false }))
+            }
+            onKhoiPhuc={handleKhoiPhuc}
           />
         )}
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="no-print fixed bottom-0 left-0 right-0 z-40 border-t-2 border-slate-200 bg-white/95 backdrop-blur pb-safe md:hidden">
-        <div className="grid grid-cols-4">
-          {navItems.map((item) => {
-            const active = tab === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setTab(item.key)}
-                className={`flex flex-col items-center justify-center gap-1 py-3 text-xs font-black transition ${
-                  active ? 'text-emerald-800' : 'text-slate-600'
-                }`}
-              >
-                <div
-                  className={`rounded-full px-4 py-1 transition ${
-                    active ? 'bg-emerald-100 text-emerald-900' : ''
-                  }`}
-                >
-                  {item.icon}
-                </div>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <UndoToast
+        visible={undoItem !== null}
+        message={undoItem?.message || ''}
+        onUndo={() => void handleHoanTac()}
+      />
 
-      {showOnboarding && (
-        <OnboardingWizard
-          settings={settings}
-          user={user}
-          onSignInGoogle={handleSignInGoogle}
-          onUpdateSettings={(next) => {
-            setSettings(next);
-            if (!isEditingExisting) {
-              setActiveRecord((prev) => ({
-                ...prev,
-                weigherName: prev.weigherName || next.defaultWeigherName,
-                pricePerKg: next.defaultPricePerKg,
-                tareConfig: { ...next.defaultTareConfig },
-              }));
-            }
-          }}
-          onAddFirstPlot={(newPlot) => {
-            setPlots((prev) => [newPlot, ...prev]);
-            if (!isEditingExisting && !activeRecord.plotName) {
-              setActiveRecord((prev) => ({
-                ...prev,
-                plotId: newPlot.id,
-                plotName: newPlot.name,
-                areaCong: newPlot.areaCong,
-                riceVariety: newPlot.riceVariety || '',
-              }));
-            }
-          }}
-          onComplete={() => {
-            markOnboardingDone();
-            setShowOnboarding(false);
-          }}
-        />
-      )}
+      <BottomNav
+        activeTab={tab}
+        onSelectTab={(nextTab) => {
+          setTab(nextTab);
+          if (nextTab === 'can_lua' && manHinh !== 'home' && !phieuDangMo) {
+            setManHinh('home');
+          }
+        }}
+      />
+
+      <FirstRunGuide
+        open={!dangTai && !caiDat.daXemHuongDan}
+        onFinish={() => void hoanTatHuongDan()}
+      />
     </div>
   );
 }
